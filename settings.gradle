@@ -1,7 +1,4 @@
-rootProject.name = 'webflux'
+rootProject.name = 'socrates'
 
-include 'webflux-core'
-include 'webflux-dialogue'
-include 'webflux-voice-legacy'
-
-include 'pipeline'
+include 'app-webflux-chat'
+include 'app-mvc-analytics'

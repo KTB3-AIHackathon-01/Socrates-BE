@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: app-webflux-chat
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+
+server:
+  port: 8081
