@@ -3,7 +3,7 @@
     <option name="envFilePaths">
       <option value="$PROJECT_DIR$/.env" />
     </option>
-    <option name="MAIN_CLASS_NAME" value="com.study.webfluxchat.WebfluxChatApplication" />
+    <option name="MAIN_CLASS_NAME" value="com.socrates.app.webflux.chat.WebfluxChatApplication" />
     <module name="socrates.app-webflux-chat.main" />
     <method v="2">
       <option name="Make" enabled="true" />

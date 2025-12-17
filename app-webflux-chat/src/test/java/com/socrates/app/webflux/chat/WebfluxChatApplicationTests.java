@@ -1,4 +1,4 @@
-package com.study.webfluxchat;
+package com.socrates.app.webflux.chat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

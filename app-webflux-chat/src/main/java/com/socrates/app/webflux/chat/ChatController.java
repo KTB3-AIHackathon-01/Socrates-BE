@@ -1,4 +1,4 @@
-package com.study.webfluxchat;
+package com.socrates.app.webflux.chat;
 
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
