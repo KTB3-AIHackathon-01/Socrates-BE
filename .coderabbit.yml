@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: ko-KR
+
+code_generation:
+  docstrings:
+    language: ko-KR
+
+reviews:
+  # PR에 대한 자동 코드 리뷰 설정
+  auto_review:
+    enabled: true
+    # 어떤 이벤트에서 자동 리뷰를 수행할지 설정
+    triggers:
+      - pull_request_opened
+      - pull_request_reopened
+      - pull_request_synchronize
+    # develop 브랜치를 대상으로 하는 PR에서만 리뷰 실행
+    filters:
+      target_branches:
+        - develop
+
+  # 리뷰 출력 형식 및 필수 옵션 예시 (필요 최소 설정)
+  high_level_summary: true
+  review_status: true
+  inline_code_comments: true
+
