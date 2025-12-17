@@ -1,9 +1,58 @@
 spring:
   application:
-    name: app-webflux-chat
+    name: webflux-dialogue
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27018/ragdb}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:16379}
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:}
+      base-url: https://api.openai.com
+      chat:
+        options:
+          model: gpt-4o-mini
+          temperature: 0.7
+    vectorstore:
+      qdrant:
+        host: ${QDRANT_HOST:localhost}
+        port: ${QDRANT_PORT:6334}
+        collection-name: ${QDRANT_COLLECTION:user_memories}
 
 server:
   port: 8081
+
+rag:
+  dialogue:
+    supertone:
+      endpoints:
+        - id: endpoint-1
+          api-key: ${SUPERTONE_API_KEY_1:${SUPERTONE_API_KEY:}}
+          base-url: ${SUPERTONE_BASE_URL:https://supertoneapi.com}
+        - id: endpoint-2
+          api-key: ${SUPERTONE_API_KEY_2:${SUPERTONE_API_KEY:}}
+          base-url: ${SUPERTONE_BASE_URL:https://supertoneapi.com}
+        - id: endpoint-3
+          api-key: ${SUPERTONE_API_KEY_3:${SUPERTONE_API_KEY:}}
+          base-url: ${SUPERTONE_BASE_URL:https://supertoneapi.com}
+      voice-id: 2c5f135cb33f49a2c8882d
+      language: ko
+      style: neutral
+      output-format: ${SUPERTONE_OUTPUT_FORMAT:mp3}
+      voice-settings:
+        pitch-shift: 0
+        pitch-variance: 1.0
+        speed: 1.1
+    qdrant:
+      url: ${QDRANT_URL:http://localhost:6334}
+      api-key: ${QDRANT_API_KEY:}
+      vector-dimension: 1536
+      collection-name: user_memories
+    memory:
+      embedding-model: text-embedding-3-small
+      extraction-model: gpt-4o-mini
+      conversation-threshold: 5
+      importance-boost: 0.05
+      importance-threshold: 0.3

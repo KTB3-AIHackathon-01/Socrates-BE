@@ -1,11 +1,10 @@
 package com.socrates.app.webflux.chat;
 
+import java.time.Duration;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
 
 @RestController
 public class ChatController {
