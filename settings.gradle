@@ -2,3 +2,4 @@ rootProject.name = 'socrates'
 
 include 'app-webflux-chat'
 include 'app-mvc-analytics'
+include 'app-webflux-chat'
