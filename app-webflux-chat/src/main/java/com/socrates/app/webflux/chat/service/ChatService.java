@@ -14,7 +14,6 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,13 +118,22 @@ public class ChatService {
                         content,
                         Boolean.TRUE.equals(response.getIsCompleted())
                 )
-                .thenMany(splitContentToWords(content))
+                .thenMany(splitContentToChunks(content, 2))
                 .map(this::toMessageEvent);
     }
 
-    private Flux<String> splitContentToWords(String content) {
-        String[] words = content.split("(?<=\\s)|(?=\\s)");
-        return Flux.fromArray(words);
+    private Flux<String> splitContentToChunks(String content, int chunkSize) {
+        if (content == null || content.isEmpty()) {
+            return Flux.empty();
+        }
+
+        List<String> chunks = new ArrayList<>();
+        for (int i = 0; i < content.length(); i += chunkSize) {
+            int end = Math.min(i + chunkSize, content.length());
+            chunks.add(content.substring(i, end));
+        }
+
+        return Flux.fromIterable(chunks);
     }
 
     private Flux<ServerSentEvent<String>> handleError(ChatMessage savedMessage, Throwable error) {
