@@ -6,9 +6,11 @@ import com.socrates.app.mvc.analytics.instructor.dto.InstructorRequest;
 import com.socrates.app.mvc.analytics.instructor.dto.InstructorResponse;
 import com.socrates.app.mvc.analytics.instructor.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -32,5 +34,12 @@ public class InstructorService {
         Instructor instructor = instructorRepository.findById(instructorId)
                 .orElseThrow(InstructorNotFoundException::new);
         return InstructorResponse.from(instructor);
+    }
+
+    public List<InstructorResponse> getInstructors() {
+        return instructorRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(InstructorResponse::from)
+                .toList();
     }
 }
