@@ -4,7 +4,6 @@ import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
-@Primary
 public class DummyFastApiChatClient implements FastApiChatClient {
 
     private final Map<String, Integer> sessionCounts = new ConcurrentHashMap<>();

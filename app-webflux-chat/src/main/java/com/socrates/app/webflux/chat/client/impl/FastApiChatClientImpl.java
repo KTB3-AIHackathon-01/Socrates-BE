@@ -5,6 +5,7 @@ import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Primary
 public class FastApiChatClientImpl implements FastApiChatClient {
 
     private final WebClient fastapiWebClient;
