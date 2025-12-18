@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/chat/messages")
+@RequestMapping("/api/analytics/messages")
 @RestController
 @Tag(name = "ChatMessages", description = "채팅 메시지 관리 API")
 public class ChatMessageController {
