@@ -20,7 +20,7 @@ public class ChatController {
 
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamChat(@Valid @RequestBody ChatRequest request) {
-        log.info("Received chat stream request from userId: {}, sessionId: {}",
+        log.info("채팅 스트림 요청 수신 - userId: {}, sessionId: {}",
                 request.getUserId(), request.getSessionId());
 
         return chatService.streamChat(request);

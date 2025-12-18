@@ -13,8 +13,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "chat_messages")
-public class ChatMessage {
+@Document(collection = "session_reports")
+public class SessionReport {
 
     @Id
     private String id;
@@ -23,23 +23,16 @@ public class ChatMessage {
 
     private String sessionId;
 
-    private String userMessage;
-
-    private String assistantMessage;
+    private String reportData;
 
     private LocalDateTime createdAt;
 
-    private LocalDateTime completedAt;
-
     @Builder.Default
-    private MessageStatus status = MessageStatus.PENDING;
+    private ReportStatus status = ReportStatus.PENDING;
 
-    @Builder.Default
-    private Boolean isComplete = false;
-
-    public enum MessageStatus {
+    public enum ReportStatus {
         PENDING,
-        STREAMING,
+        PROCESSING,
         COMPLETED,
         FAILED
     }
