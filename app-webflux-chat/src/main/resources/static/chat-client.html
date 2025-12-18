@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>WebFlux Chat Dummy Client</title>
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 16px; }
+        h1 { font-size: 20px; margin-bottom: 8px; }
+        #controls { margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+        label { font-size: 12px; color: #444; }
+        input[type="text"] { padding: 4px 6px; font-size: 13px; }
+        #chat-container { border: 1px solid #ddd; border-radius: 4px; height: 400px; overflow-y: auto; padding: 8px; background: #fafafa; }
+        .msg { margin-bottom: 4px; font-size: 13px; }
+        .msg.user { color: #0066cc; }
+        .msg.assistant { color: #009944; }
+        .msg.system { color: #999; font-style: italic; }
+        #input-row { margin-top: 8px; display: flex; gap: 8px; }
+        #message-input { flex: 1; padding: 6px 8px; font-size: 14px; }
+        button { padding: 6px 10px; font-size: 13px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<h1>WebFlux Chat Dummy Client</h1>
+
+<div id="controls">
+    <div>
+        <label>사용자 ID</label><br>
+        <input type="text" id="userId" value="demo-user">
+    </div>
+    <div>
+        <label>세션 ID</label><br>
+        <input type="text" id="sessionId" placeholder="비우면 자동 생성">
+    </div>
+</div>
+
+<div id="chat-container"></div>
+
+<div id="input-row">
+    <input type="text" id="message-input" placeholder="메시지를 입력하고 Enter 또는 전송 버튼을 누르세요">
+    <button id="send-btn">전송</button>
+</div>
+
+<script>
+    const chatContainer = document.getElementById('chat-container');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const userIdInput = document.getElementById('userId');
+    const sessionIdInput = document.getElementById('sessionId');
+
+    let currentController = null;
+    let isComposing = false;
+
+    function appendMessage(text, type) {
+        const div = document.createElement('div');
+        div.className = 'msg ' + type;
+        div.textContent = text;
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function ensureSessionId() {
+        let sid = sessionIdInput.value.trim();
+        if (!sid) {
+            sid = 'session-' + Date.now();
+            sessionIdInput.value = sid;
+            appendMessage('세션 ID 자동 생성: ' + sid, 'system');
+        }
+        return sid;
+    }
+
+    async function sendMessage() {
+        // 이전 요청이 아직 진행 중이면 중단
+        if (currentController) {
+            currentController.abort();
+            appendMessage('이전 응답 스트림 중단', 'system');
+            currentController = null;
+        }
+
+        const message = messageInput.value.trim();
+        if (!message) {
+            return;
+        }
+
+        const userId = userIdInput.value.trim() || 'anonymous';
+        const sessionId = ensureSessionId();
+
+        appendMessage('[나] ' + message, 'user');
+        messageInput.value = '';
+
+        const body = { message, userId, sessionId };
+
+        const url = '/api/chat/stream';
+        const controller = new AbortController();
+        currentController = controller;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
+                body: JSON.stringify(body),
+                signal: controller.signal
+            });
+
+            if (!response.ok || !response.body) {
+                appendMessage('요청 실패: ' + response.status, 'system');
+                return;
+            }
+
+            appendMessage('--- 응답 시작 ---', 'system');
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+
+            let buffer = '';
+
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, {stream: true});
+
+                let lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    const lineStr = line.replace(/\r$/, '');
+                    if (!lineStr.startsWith('data:')) {
+                        continue;
+                    }
+                    let data = lineStr.substring(5); // after 'data:'
+                    if (data.startsWith(' ')) {
+                        data = data.substring(1); // optional leading space 제거
+                    }
+                    appendMessage(data, 'assistant');
+                }
+            }
+
+            appendMessage('--- 응답 종료 ---', 'system');
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                appendMessage('스트림 오류: ' + e.message, 'system');
+            }
+        } finally {
+            if (currentController === controller) {
+                currentController = null;
+            }
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    messageInput.addEventListener('compositionstart', () => {
+        isComposing = true;
+    });
+    messageInput.addEventListener('compositionend', () => {
+        isComposing = false;
+    });
+    messageInput.addEventListener('keydown', (e) => {
+        // 한글 입력(IME) 조합 중 Enter는 무시
+        if (isComposing || e.isComposing) {
+            return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+</script>
+</body>
+</html>
