@@ -10,9 +10,15 @@ public class WebCorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173")
+                .allowedOriginPatterns(
+                        "http://localhost:*",
+                        "https://*.socrates-hkt.shop",
+                        "https://socrates-hkt.shop",
+                        "https://www.socrates-hkt.shop"
+                )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
+                .exposedHeaders("*")
                 .allowCredentials(true)
                 .maxAge(3600);
     }

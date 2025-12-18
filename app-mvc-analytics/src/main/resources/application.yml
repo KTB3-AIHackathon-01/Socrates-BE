@@ -35,6 +35,9 @@ springdoc:
     path: /api/analytics/docs         # Swagger UI 접근 경로 => <http://localhost:8081/api/analytics/docs>
     tags-sorter: alpha          # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
     operations-sorter: alpha    # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
+    try-it-out-enabled: true    # Try it out 기능 활성화
     urls:
       - url: /api/analytics/api-docs/json
         name: Analytics API
+  cors:
+    enabled: true               # CORS 활성화

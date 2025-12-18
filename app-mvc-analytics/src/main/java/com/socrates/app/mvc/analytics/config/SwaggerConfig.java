@@ -3,9 +3,12 @@ package com.socrates.app.mvc.analytics.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
@@ -13,7 +16,8 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
                 .components(new Components())
-                .info(apiInfo());
+                .info(apiInfo())
+                .servers(servers());
     }
 
     @Bean
@@ -22,6 +26,13 @@ public class SwaggerConfig {
                 .group("analytics-api")
                 .pathsToMatch("/api/analytics/**")
                 .build();
+    }
+
+    private List<Server> servers() {
+        return List.of(
+                new Server().url("https://api.socrates-hkt.shop").description("Production Server"),
+                new Server().url("http://localhost:8081").description("Local Development Server")
+        );
     }
 
     private Info apiInfo() {
