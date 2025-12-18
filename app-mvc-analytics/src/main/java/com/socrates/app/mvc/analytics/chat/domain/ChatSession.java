@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
@@ -15,8 +14,8 @@ import java.util.UUID;
 public class ChatSession {
 
     @Id
-    @Column(name = "id", columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "id")
+    private String id;
 
     @Column(name = "name", nullable = false)
     private String name;

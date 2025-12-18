@@ -24,7 +24,7 @@ public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatSessionRepository chatSessionRepository;
 
-    public PagedModel<ChatMessageResponse> getMessagesBySessionId(UUID sessionId, UUID studentId, int pageNumber, int pageSize) {
+    public PagedModel<ChatMessageResponse> getMessagesBySessionId(String sessionId, UUID studentId, int pageNumber, int pageSize) {
         ChatSession chatSession = chatSessionRepository.findById(sessionId)
                 .orElseThrow(ChatSessionNotFoundException::new);
 

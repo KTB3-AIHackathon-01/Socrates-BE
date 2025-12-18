@@ -11,7 +11,7 @@ import java.util.UUID;
 @Schema(description = "채팅 세션 정보")
 public record ChatSessionResponse(
         @Schema(description = "채팅 세션 ID", format = "uuid")
-        UUID sessionId,
+        String sessionId,
         @Schema(description = "학생 ID", format = "uuid")
         UUID studentId,
         @Schema(description = "채팅 세션 제목")
