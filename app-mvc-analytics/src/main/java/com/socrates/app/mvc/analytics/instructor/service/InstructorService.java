@@ -1,10 +1,10 @@
 package com.socrates.app.mvc.analytics.instructor.service;
 
+import com.socrates.app.mvc.analytics.common.exception.InstructorNotFoundException;
 import com.socrates.app.mvc.analytics.instructor.domain.Instructor;
 import com.socrates.app.mvc.analytics.instructor.dto.InstructorRequest;
 import com.socrates.app.mvc.analytics.instructor.dto.InstructorResponse;
 import com.socrates.app.mvc.analytics.instructor.repository.InstructorRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class InstructorService {
 
     public InstructorResponse getInstructor(UUID instructorId) {
         Instructor instructor = instructorRepository.findById(instructorId)
-                .orElseThrow(() -> new EntityNotFoundException("Instructor not found: " + instructorId));
+                .orElseThrow(InstructorNotFoundException::new);
         return InstructorResponse.from(instructor);
     }
 }

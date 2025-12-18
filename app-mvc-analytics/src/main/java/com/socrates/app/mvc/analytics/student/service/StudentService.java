@@ -1,11 +1,12 @@
 package com.socrates.app.mvc.analytics.student.service;
 
+import com.socrates.app.mvc.analytics.common.exception.InstructorNotFoundException;
+import com.socrates.app.mvc.analytics.common.exception.StudentNotFoundException;
 import com.socrates.app.mvc.analytics.instructor.domain.Instructor;
 import com.socrates.app.mvc.analytics.instructor.repository.InstructorRepository;
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import com.socrates.app.mvc.analytics.student.dto.*;
 import com.socrates.app.mvc.analytics.student.repository.StudentRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,7 @@ public class StudentService {
     @Transactional
     public StudentResponse createStudent(StudentRequest studentRequest) {
         Instructor instructor = instructorRepository.findById(studentRequest.instructorId())
-                .orElseThrow(() -> new EntityNotFoundException("Instructor not found: " + studentRequest.instructorId()));
+                .orElseThrow(InstructorNotFoundException::new);
 
         Student student = Student.builder()
                 .name(studentRequest.name())
@@ -36,7 +37,7 @@ public class StudentService {
 
     public StudentResponse getStudent(UUID studentId) {
         Student student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new EntityNotFoundException("Student not found: " + studentId));
+                .orElseThrow(StudentNotFoundException::new);
         return StudentResponse.from(student);
     }
 }

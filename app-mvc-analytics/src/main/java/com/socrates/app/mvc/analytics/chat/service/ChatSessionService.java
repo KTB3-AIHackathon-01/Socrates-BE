@@ -4,9 +4,10 @@ import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
 import com.socrates.app.mvc.analytics.chat.dto.ChatSessionRequest;
 import com.socrates.app.mvc.analytics.chat.dto.ChatSessionResponse;
 import com.socrates.app.mvc.analytics.chat.repository.ChatSessionRepository;
+import com.socrates.app.mvc.analytics.common.exception.ChatSessionNotFoundException;
+import com.socrates.app.mvc.analytics.common.exception.StudentNotFoundException;
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import com.socrates.app.mvc.analytics.student.repository.StudentRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,7 +29,7 @@ public class ChatSessionService {
     @Transactional
     public ChatSessionResponse createChatSession(ChatSessionRequest chatSessionRequest) {
         Student student = studentRepository.findById(chatSessionRequest.studentId())
-                .orElseThrow(() -> new EntityNotFoundException("Student not found: " + chatSessionRequest.studentId()));
+                .orElseThrow(StudentNotFoundException::new);
 
         student.updateLastActivityAt();
 
@@ -44,13 +45,13 @@ public class ChatSessionService {
 
     public ChatSessionResponse getChatSession(UUID sessionId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Chat session not found: " + sessionId));
+                .orElseThrow(ChatSessionNotFoundException::new);
         return ChatSessionResponse.from(session);
     }
 
     public PagedModel<ChatSessionResponse> getChatSessions(UUID studentId, int pageNumber, int pageSize) {
         if (!studentRepository.existsById(studentId)) {
-            throw new EntityNotFoundException("Student not found: " + studentId);
+            throw new StudentNotFoundException();
         }
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
