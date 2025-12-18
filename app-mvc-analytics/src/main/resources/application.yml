@@ -2,8 +2,8 @@ spring:
   datasource:
     url: ${POSTGRESQL_URI:jdbc:postgresql://localhost:5432/socrates}
     driver-class-name: org.postgresql.Driver
-    username: root
-    password: root
+    username: ${POSTGRESQL_USERNAME:root}
+    password: ${POSTGRESQL_PASSWORD:root}
 
   data:
     mongodb:

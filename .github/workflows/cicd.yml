@@ -130,6 +130,10 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/cicd1'
         env:
           SERVER_PORT: "8081"
+          POSTGRESQL_URI: ${{ secrets.POSTGRESQL_URI }}
+          POSTGRESQL_USERNAME: ${{ secrets.POSTGRESQL_USERNAME }}
+          POSTGRESQL_PASSWORD: ${{ secrets.POSTGRESQL_PASSWORD }}
+          MONGODB_URI: ${{ secrets.CHAT_MONGODB_URI }}
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.ANALYTICS_TASK }} --query taskDefinition > raw-task-def.json
           cat raw-task-def.json | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-definition.json
@@ -138,10 +142,18 @@ jobs:
           
           cat task-definition.json | jq --arg IMAGE "$NEW_IMAGE" \
             --arg SERVER_PORT "$SERVER_PORT" \
+            --arg POSTGRESQL_URI "$POSTGRESQL_URI" \
+            --arg POSTGRESQL_USERNAME "$POSTGRESQL_USERNAME" \
+            --arg POSTGRESQL_PASSWORD "$POSTGRESQL_PASSWORD" \
+            --arg MONGODB_URI "$MONGODB_URI" \
             '.containerDefinitions[0].image = $IMAGE | 
-             .containerDefinitions[0].environment = [
-               {"name": "SERVER_PORT", "value": $SERVER_PORT}
-             ]' > final-task-def.json
+             .containerDefinitions[0].environment = ([
+               {"name": "SERVER_PORT", "value": $SERVER_PORT},
+               {"name": "POSTGRESQL_URI", "value": $POSTGRESQL_URI},
+               {"name": "POSTGRESQL_USERNAME", "value": $POSTGRESQL_USERNAME},
+               {"name": "POSTGRESQL_PASSWORD", "value": $POSTGRESQL_PASSWORD},
+               {"name": "MONGODB_URI", "value": $MONGODB_URI}
+             ] | map(select(.value != "" and .value != null and .value != "null")))' > final-task-def.json
           
           NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json file://final-task-def.json)
           NEW_REVISION=$(echo $NEW_TASK_INFO | jq '.taskDefinition.revision')
