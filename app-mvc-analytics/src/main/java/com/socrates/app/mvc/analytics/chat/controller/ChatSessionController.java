@@ -1,8 +1,8 @@
-package com.socrates.app.mvc.analytics.session.controller;
+package com.socrates.app.mvc.analytics.chat.controller;
 
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionRequest;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionResponse;
-import com.socrates.app.mvc.analytics.session.service.ChatSessionService;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionRequest;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionResponse;
+import com.socrates.app.mvc.analytics.chat.service.ChatSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,21 +11,17 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/sessions")
+@RequestMapping("/api/chat/sessions")
 @RestController
-@Tag(name = "Sessions", description = "채팅 세션 관리 API")
+@Tag(name = "ChatSessions", description = "채팅방 세션 관리 API")
 public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;
@@ -53,6 +49,20 @@ public class ChatSessionController {
     @GetMapping("/{sessionId}")
     public ResponseEntity<ChatSessionResponse> getChatSession(@PathVariable UUID sessionId) {
         ChatSessionResponse response = chatSessionService.getChatSession(sessionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "학생별 채팅 목록 조회", description = "학생별 세션 목록을 페이지로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "세션 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ChatSessionResponse.class)))
+    })
+    @GetMapping("/student")
+    public ResponseEntity<PagedModel<ChatSessionResponse>> getChatSessionList(
+            @RequestHeader("X-Student-Id") UUID studentId,
+            @RequestParam("page") int page,
+            @RequestParam("size") int size) {
+        PagedModel<ChatSessionResponse> response = chatSessionService.getChatSessions(studentId, page, size);
         return ResponseEntity.ok(response);
     }
 }

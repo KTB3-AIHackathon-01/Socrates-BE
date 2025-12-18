@@ -1,6 +1,6 @@
-package com.socrates.app.mvc.analytics.session.dto;
+package com.socrates.app.mvc.analytics.chat.dto;
 
-import com.socrates.app.mvc.analytics.session.domain.ChatSession;
+import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -14,6 +14,8 @@ public record ChatSessionResponse(
         UUID sessionId,
         @Schema(description = "학생 ID", format = "uuid")
         UUID studentId,
+        @Schema(description = "채팅 세션 제목")
+        String name,
         @Schema(description = "세션 시작 시각", type = "string", format = "date-time")
         LocalDateTime startedAt,
         @Schema(description = "세션 종료 시각", type = "string", format = "date-time", nullable = true)

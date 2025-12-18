@@ -1,19 +1,24 @@
-package com.socrates.app.mvc.analytics.session.service;
+package com.socrates.app.mvc.analytics.chat.service;
 
-import com.socrates.app.mvc.analytics.session.domain.ChatSession;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionRequest;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionResponse;
-import com.socrates.app.mvc.analytics.session.repository.ChatSessionRepository;
+import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionRequest;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionResponse;
+import com.socrates.app.mvc.analytics.chat.repository.ChatSessionRepository;
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import com.socrates.app.mvc.analytics.student.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Service
 public class ChatSessionService {
 
@@ -28,6 +33,8 @@ public class ChatSessionService {
         student.updateLastActivityAt();
 
         ChatSession chatSession = ChatSession.builder()
+                .id(chatSessionRequest.sessionId())
+                .name(chatSessionRequest.name())
                 .student(student)
                 .build();
 
@@ -35,10 +42,20 @@ public class ChatSessionService {
         return ChatSessionResponse.from(savedSession);
     }
 
-    @Transactional(readOnly = true)
     public ChatSessionResponse getChatSession(UUID sessionId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Chat session not found: " + sessionId));
         return ChatSessionResponse.from(session);
+    }
+
+    public PagedModel<ChatSessionResponse> getChatSessions(UUID studentId, int pageNumber, int pageSize) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new EntityNotFoundException("Student not found: " + studentId);
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<ChatSession> chatSessions = chatSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId, pageable);
+
+        return new PagedModel<>(chatSessions.map(ChatSessionResponse::from));
     }
 }

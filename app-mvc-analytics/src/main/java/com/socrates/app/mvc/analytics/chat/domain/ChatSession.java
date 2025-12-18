@@ -1,4 +1,4 @@
-package com.socrates.app.mvc.analytics.session.domain;
+package com.socrates.app.mvc.analytics.chat.domain;
 
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import jakarta.persistence.*;
@@ -15,9 +15,11 @@ import java.util.UUID;
 public class ChatSession {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", columnDefinition = "uuid")
     private UUID id;
+
+    @Column(name = "name", nullable = false)
+    private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
