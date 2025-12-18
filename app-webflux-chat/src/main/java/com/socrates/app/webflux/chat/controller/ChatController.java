@@ -3,9 +3,11 @@ package com.socrates.app.webflux.chat.controller;
 import com.socrates.app.webflux.chat.dto.ChatHistoryResponse;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.ChatTitleResponse;
+import com.socrates.app.webflux.chat.dto.SessionReportResponse;
 import com.socrates.app.webflux.chat.service.ChatMessageService;
 import com.socrates.app.webflux.chat.service.ChatService;
 import com.socrates.app.webflux.chat.service.ChatTitleService;
+import com.socrates.app.webflux.chat.service.SessionReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ public class ChatController {
     private final ChatService chatService;
     private final ChatTitleService chatTitleService;
     private final ChatMessageService chatMessageService;
+    private final SessionReportService sessionReportService;
 
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamChat(@Valid @RequestBody ChatRequest request) {
@@ -56,6 +59,22 @@ public class ChatController {
                         .completedAt(message.getCompletedAt())
                         .status(message.getStatus() != null ? message.getStatus().name() : null)
                         .isComplete(message.getIsComplete())
+                        .build());
+    }
+
+    @GetMapping("/report/{sessionId}")
+    public Mono<SessionReportResponse> getReport(@PathVariable String sessionId) {
+        log.info("리포트 조회/생성 요청 - sessionId: {}", sessionId);
+
+        return sessionReportService.generateReport(sessionId)
+                .map(report -> SessionReportResponse.builder()
+                        .id(report.getId())
+                        .userId(report.getUserId())
+                        .sessionId(report.getSessionId())
+                        .reportData(report.getReportData())
+                        .reportJson(report.getReportJson())
+                        .createdAt(report.getCreatedAt())
+                        .status(report.getStatus() != null ? report.getStatus().name() : null)
                         .build());
     }
 
