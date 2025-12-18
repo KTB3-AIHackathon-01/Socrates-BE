@@ -44,6 +44,9 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 	implementation 'org.springframework.ai:spring-ai-qdrant-store-spring-boot-starter'
 
+	// .env 파일 지원
+	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 	annotationProcessor 'org.projectlombok:lombok'
