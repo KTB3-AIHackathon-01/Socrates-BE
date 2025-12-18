@@ -125,11 +125,14 @@
                 buffer = lines.pop() || '';
 
                 for (const line of lines) {
-                    const trimmed = line.trim();
-                    if (!trimmed || !trimmed.startsWith('data:')) {
+                    const lineStr = line.replace(/\r$/, '');
+                    if (!lineStr.startsWith('data:')) {
                         continue;
                     }
-                    const data = trimmed.substring(5).trim();
+                    let data = lineStr.substring(5); // after 'data:'
+                    if (data.startsWith(' ')) {
+                        data = data.substring(1); // optional leading space 제거
+                    }
                     appendMessage(data, 'assistant');
                 }
             }
