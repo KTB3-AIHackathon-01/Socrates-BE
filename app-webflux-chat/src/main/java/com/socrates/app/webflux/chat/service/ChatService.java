@@ -1,14 +1,18 @@
 package com.socrates.app.webflux.chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.domain.ChatMessage;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
+import com.socrates.app.webflux.chat.dto.SseEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
 @Slf4j
 @Service
@@ -18,47 +22,93 @@ public class ChatService {
     private final FastApiChatClient fastApiChatClient;
     private final ChatMessageService chatMessageService;
     private final SessionReportService sessionReportService;
+    private final ObjectMapper objectMapper;
 
     public Flux<ServerSentEvent<String>> streamChat(ChatRequest request) {
         log.info("사용자 채팅 스트림 처리 시작: {}", request.getUserId());
 
-        return chatMessageService.savePendingMessage(request)
-                .flatMapMany(savedMessage -> processResponse(request, savedMessage))
-                .map(this::toServerSentEvent)
-                .doOnNext(sse -> log.debug("응답 스트림 전송: {}", sse.data()))
-                .doOnComplete(() -> log.info("사용자 채팅 스트림 처리 완료: {}", request.getUserId()));
+        Sinks.Many<ServerSentEvent<String>> mainSink = Sinks.many().multicast().onBackpressureBuffer();
+        Sinks.Many<String> reportSink = Sinks.many().multicast().onBackpressureBuffer();
+
+        sessionReportService.registerReportSink(request.getSessionId(), reportSink);
+
+        Flux<ServerSentEvent<String>> reportEventFlux = reportSink.asFlux()
+                .map(markdown -> createReportEvent(request.getSessionId(), markdown))
+                .doOnNext(event -> log.info("리포트 SSE 이벤트 생성 - sessionId: {}", request.getSessionId()));
+
+        chatMessageService.savePendingMessage(request)
+                .flatMapMany(savedMessage -> processResponse(request, savedMessage, mainSink))
+                .subscribe(
+                        sse -> mainSink.tryEmitNext(sse),
+                        error -> {
+                            log.error("채팅 스트림 오류: {}", error.getMessage());
+                            mainSink.tryEmitError(error);
+                        },
+                        () -> log.info("채팅 메시지 스트림 완료: {}", request.getUserId())
+                );
+
+        return Flux.merge(mainSink.asFlux(), reportEventFlux)
+                .doOnComplete(() -> log.info("SSE 스트림 전체 완료: {}", request.getUserId()));
     }
 
-    private Flux<String> processResponse(ChatRequest request, ChatMessage savedMessage) {
+    private Flux<ServerSentEvent<String>> processResponse(
+            ChatRequest request,
+            ChatMessage savedMessage,
+            Sinks.Many<ServerSentEvent<String>> sink) {
+
         return fastApiChatClient.chat(request)
-                .doOnNext(response -> handleSessionCompletion(request, response))
-                .flatMapMany(response -> saveAndStreamResponse(savedMessage, response))
+                .flatMapMany(response -> {
+                    if (Boolean.TRUE.equals(response.getIsComplete())) {
+                        return handleCompletedSession(request, savedMessage, response, sink);
+                    } else {
+                        return saveAndStreamResponse(savedMessage, response);
+                    }
+                })
                 .onErrorResume(error -> handleError(savedMessage, error));
     }
 
-    private void handleSessionCompletion(ChatRequest request, FastApiChatResponse response) {
-        if (Boolean.TRUE.equals(response.getIsComplete())) {
-            log.info("세션 완료 감지 - sessionId: {}, 백그라운드 리포트 생성 시작", request.getSessionId());
-            triggerReportGeneration(request.getUserId(), request.getSessionId());
-        }
+    private Flux<ServerSentEvent<String>> handleCompletedSession(
+            ChatRequest request,
+            ChatMessage savedMessage,
+            FastApiChatResponse response,
+            Sinks.Many<ServerSentEvent<String>> sink) {
+
+        log.info("세션 완료 감지 - sessionId: {}", request.getSessionId());
+
+        return saveAndStreamResponse(savedMessage, response)
+                .concatWith(Flux.defer(() -> {
+                    ServerSentEvent<String> chatEndEvent = createChatEndEvent(request.getSessionId());
+                    triggerReportGeneration(request.getUserId(), request.getSessionId(), sink);
+                    return Flux.just(chatEndEvent);
+                }));
     }
 
-    private void triggerReportGeneration(String userId, String sessionId) {
+    private void triggerReportGeneration(
+            String userId,
+            String sessionId,
+            Sinks.Many<ServerSentEvent<String>> sink) {
+
+        log.info("백그라운드 리포트 생성 시작 - sessionId: {}", sessionId);
+
         sessionReportService.generateReportAsync(userId, sessionId)
                 .subscribe(
                         null,
                         error -> log.error("백그라운드 리포트 생성 실패: {}", error.getMessage()),
-                        () -> log.info("백그라운드 리포트 생성 작업 완료")
+                        () -> log.info("백그라운드 리포트 생성 작업 완료 - sessionId: {}", sessionId)
                 );
     }
 
-    private Flux<String> saveAndStreamResponse(ChatMessage savedMessage, FastApiChatResponse response) {
+    private Flux<ServerSentEvent<String>> saveAndStreamResponse(
+            ChatMessage savedMessage,
+            FastApiChatResponse response) {
+
         return chatMessageService.updateCompletedMessage(
                         savedMessage.getId(),
                         response.getContent(),
                         Boolean.TRUE.equals(response.getIsComplete())
                 )
-                .thenMany(splitContentToWords(response.getContent()));
+                .thenMany(splitContentToWords(response.getContent()))
+                .map(this::toMessageEvent);
     }
 
     private Flux<String> splitContentToWords(String content) {
@@ -66,15 +116,45 @@ public class ChatService {
         return Flux.fromArray(words);
     }
 
-    private Flux<String> handleError(ChatMessage savedMessage, Throwable error) {
+    private Flux<ServerSentEvent<String>> handleError(ChatMessage savedMessage, Throwable error) {
         log.error("채팅 스트림 오류 발생: {}", error.getMessage());
         chatMessageService.updateFailedMessage(savedMessage.getId()).subscribe();
         return Flux.error(error);
     }
 
-    private ServerSentEvent<String> toServerSentEvent(String chunk) {
-        return ServerSentEvent.<String>builder()
-                .data(chunk)
-                .build();
+    private ServerSentEvent<String> toMessageEvent(String chunk) {
+        SseEvent event = SseEvent.chatMessage(chunk);
+        return toServerSentEvent(event);
+    }
+
+    private ServerSentEvent<String> createChatEndEvent(String sessionId) {
+        SseEvent event = SseEvent.chatEnd(sessionId);
+        return toServerSentEvent(event);
+    }
+
+    private ServerSentEvent<String> createReportEvent(String sessionId, String markdown) {
+        SseEvent event = SseEvent.report(sessionId, markdown);
+        return toServerSentEvent(event);
+    }
+
+    private ServerSentEvent<String> toServerSentEvent(SseEvent event) {
+        try {
+            String data;
+            if (event.getData() instanceof String) {
+                data = (String) event.getData();
+            } else {
+                data = objectMapper.writeValueAsString(event.getData());
+            }
+            return ServerSentEvent.<String>builder()
+                    .event(event.getEvent())
+                    .data(data)
+                    .build();
+        } catch (JsonProcessingException e) {
+            log.error("SSE 이벤트 JSON 변환 실패: {}", e.getMessage());
+            return ServerSentEvent.<String>builder()
+                    .event("error")
+                    .data("{\"error\": \"Failed to serialize event\"}")
+                    .build();
+        }
     }
 }
