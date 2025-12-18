@@ -20,7 +20,7 @@ COPY app-webflux-chat/src app-webflux-chat/src
 COPY app-mvc-analytics/src app-mvc-analytics/src
 
 # 빌드 인자 설정
-ARG MODULE=app-webflux-chat
+ARG MODULE=app-mvc-analytics
 RUN ./gradlew :${MODULE}:bootJar --no-daemon -x test
 
 # JAR 파일 경로 정리
