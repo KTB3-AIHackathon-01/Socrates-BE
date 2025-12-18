@@ -1,7 +1,7 @@
 package com.socrates.app.webflux.chat.client.impl;
 
 import com.socrates.app.webflux.chat.client.FastApiChatClient;
-import com.socrates.app.webflux.chat.dto.ChatRequest;
+import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public class FastApiChatClientImpl implements FastApiChatClient {
     private final WebClient fastapiWebClient;
 
     @Override
-    public Flux<FastApiChatResponse> streamChat(ChatRequest request) {
+    public Flux<FastApiChatResponse> streamChat(FastApiChatRequest request) {
         log.debug("FastAPI 채팅 스트림 호출 시작, 요청: {}", request);
 
         return fastapiWebClient.post()
@@ -35,7 +35,7 @@ public class FastApiChatClientImpl implements FastApiChatClient {
     }
 
     @Override
-    public Mono<FastApiChatResponse> chat(ChatRequest request) {
+    public Mono<FastApiChatResponse> chat(FastApiChatRequest request) {
         log.debug("FastAPI 채팅 Mono 호출 시작, 요청: {}", request);
 
         return fastapiWebClient.post()

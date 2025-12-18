@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.domain.ChatMessage;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
+import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import com.socrates.app.webflux.chat.dto.SseEvent;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -58,10 +62,11 @@ public class ChatService {
             Sinks.Many<ServerSentEvent<String>> sink) {
 
         return loadChatHistory(request)
-                .flatMapMany(requestWithHistory ->
-                        fastApiChatClient.chat(requestWithHistory)
+                .map(this::toFastApiRequest)
+                .flatMapMany(fastApiRequest ->
+                        fastApiChatClient.chat(fastApiRequest)
                                 .flatMapMany(response -> {
-                                    if (Boolean.TRUE.equals(response.getIsComplete())) {
+                                    if (Boolean.TRUE.equals(response.getIsCompleted())) {
                                         return handleCompletedSession(request, savedMessage, response, sink);
                                     } else {
                                         return saveAndStreamResponse(savedMessage, response);
@@ -84,6 +89,27 @@ public class ChatService {
                     log.info("채팅 히스토리 로드 완료 - sessionId: {}, count: {}", request.getSessionId(), history.size());
                     return request;
                 });
+    }
+
+    private FastApiChatRequest toFastApiRequest(ChatRequest request) {
+        List<String> userInputList = new ArrayList<>();
+
+        if (request.getHistory() != null) {
+            for (ChatRequest.ChatHistoryItem item : request.getHistory()) {
+                userInputList.add(item.getUserMessage());
+                userInputList.add(item.getAssistantMessage());
+            }
+        }
+
+        userInputList.add(request.getMessage());
+
+        FastApiChatRequest.DataWrapper dataWrapper = FastApiChatRequest.DataWrapper.builder()
+                .user_input(userInputList)
+                .build();
+
+        return FastApiChatRequest.builder()
+                .data(dataWrapper)
+                .build();
     }
 
     private Flux<ServerSentEvent<String>> handleCompletedSession(
@@ -121,12 +147,16 @@ public class ChatService {
             ChatMessage savedMessage,
             FastApiChatResponse response) {
 
+        String content = response.getData() != null && response.getData().getUserFacingMessage() != null
+                ? response.getData().getUserFacingMessage()
+                : "";
+
         return chatMessageService.updateCompletedMessage(
                         savedMessage.getId(),
-                        response.getContent(),
-                        Boolean.TRUE.equals(response.getIsComplete())
+                        content,
+                        Boolean.TRUE.equals(response.getIsCompleted())
                 )
-                .thenMany(splitContentToWords(response.getContent()))
+                .thenMany(splitContentToWords(content))
                 .map(this::toMessageEvent);
     }
 
