@@ -5,7 +5,7 @@ import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-public interface FastApiClient {
+public interface FastApiChatClient {
 
     Flux<FastApiChatResponse> streamChat(ChatRequest request);
 

@@ -1,6 +1,6 @@
 package com.socrates.app.webflux.chat.service;
 
-import com.socrates.app.webflux.chat.client.FastApiClient;
+import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.domain.ChatMessage;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class ChatService {
 
-    private final FastApiClient fastApiClient;
+    private final FastApiChatClient fastApiChatClient;
     private final ChatMessageService chatMessageService;
     private final SessionReportService sessionReportService;
 
@@ -30,7 +30,7 @@ public class ChatService {
     }
 
     private Flux<String> processResponse(ChatRequest request, ChatMessage savedMessage) {
-        return fastApiClient.chat(request)
+        return fastApiChatClient.chat(request)
                 .doOnNext(response -> handleSessionCompletion(request, response))
                 .flatMapMany(response -> saveAndStreamResponse(savedMessage, response))
                 .onErrorResume(error -> handleError(savedMessage, error));

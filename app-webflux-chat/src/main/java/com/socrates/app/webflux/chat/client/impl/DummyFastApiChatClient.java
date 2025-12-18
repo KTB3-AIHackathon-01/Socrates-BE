@@ -1,6 +1,6 @@
 package com.socrates.app.webflux.chat.client.impl;
 
-import com.socrates.app.webflux.chat.client.FastApiClient;
+import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import java.time.Duration;
 @Slf4j
 @Component
 @Primary
-public class DummyFastApiClient implements FastApiClient {
+public class DummyFastApiChatClient implements FastApiChatClient {
 
     private int callCount = 0;
 

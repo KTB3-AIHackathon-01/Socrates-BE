@@ -1,6 +1,6 @@
 package com.socrates.app.webflux.chat.client.impl;
 
-import com.socrates.app.webflux.chat.client.FastApiClient;
+import com.socrates.app.webflux.chat.client.FastApiChatClient;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiChatResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FastApiClientImpl implements FastApiClient {
+public class FastApiChatClientImpl implements FastApiChatClient {
 
     private final WebClient fastapiWebClient;
 
