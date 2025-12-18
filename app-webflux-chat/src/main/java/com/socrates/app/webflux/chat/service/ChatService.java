@@ -56,15 +56,33 @@ public class ChatService {
             ChatMessage savedMessage,
             Sinks.Many<ServerSentEvent<String>> sink) {
 
-        return fastApiChatClient.chat(request)
-                .flatMapMany(response -> {
-                    if (Boolean.TRUE.equals(response.getIsComplete())) {
-                        return handleCompletedSession(request, savedMessage, response, sink);
-                    } else {
-                        return saveAndStreamResponse(savedMessage, response);
-                    }
-                })
-                .onErrorResume(error -> handleError(savedMessage, error));
+        return loadChatHistory(request)
+                .flatMapMany(requestWithHistory ->
+                        fastApiChatClient.chat(requestWithHistory)
+                                .flatMapMany(response -> {
+                                    if (Boolean.TRUE.equals(response.getIsComplete())) {
+                                        return handleCompletedSession(request, savedMessage, response, sink);
+                                    } else {
+                                        return saveAndStreamResponse(savedMessage, response);
+                                    }
+                                })
+                                .onErrorResume(error -> handleError(savedMessage, error))
+                );
+    }
+
+    private Mono<ChatRequest> loadChatHistory(ChatRequest request) {
+        return chatMessageService.findByUserIdAndSessionId(request.getUserId(), request.getSessionId())
+                .filter(msg -> msg.getStatus() == ChatMessage.MessageStatus.COMPLETED)
+                .map(msg -> ChatRequest.ChatHistoryItem.builder()
+                        .userMessage(msg.getUserMessage())
+                        .assistantMessage(msg.getAssistantMessage())
+                        .build())
+                .collectList()
+                .map(history -> {
+                    request.setHistory(history);
+                    log.info("채팅 히스토리 로드 완료 - sessionId: {}, count: {}", request.getSessionId(), history.size());
+                    return request;
+                });
     }
 
     private Flux<ServerSentEvent<String>> handleCompletedSession(
