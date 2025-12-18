@@ -26,6 +26,7 @@ public record ChatSessionResponse(
         return ChatSessionResponse.builder()
                 .sessionId(chatSession.getId())
                 .studentId(chatSession.getStudent().getId())
+                .name(chatSession.getName())
                 .startedAt(chatSession.getStartedAt())
                 .endedAt(chatSession.getEndedAt())
                 .build();
