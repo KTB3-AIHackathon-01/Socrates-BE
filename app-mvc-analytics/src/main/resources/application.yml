@@ -27,11 +27,14 @@ springdoc:
   cache:
     disabled: true              # 캐시 사용 여부
   api-docs:
-    path: /api-docs/json
+    path: /api/analytics/api-docs/json
     groups:
       enabled: true
   swagger-ui:
-    enabled: true               # Swagger UI 사용여부 : 접근 경로 => <http://localhost:8080/swagger-ui/index.html>
-    path: /docs         # Swagger UI 추가 접근 경로 => <http://localhost:8080/demo-ui.html>
+    enabled: true               # Swagger UI 사용여부 : 접근 경로 => <http://localhost:8081/swagger-ui/index.html>
+    path: /api/analytics/docs         # Swagger UI 접근 경로 => <http://localhost:8081/api/analytics/docs>
     tags-sorter: alpha          # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
     operations-sorter: alpha    # alpha: 알파벳 순 태그 정렬, method: HTTP Method 순 정렬
+    urls:
+      - url: /api/analytics/api-docs/json
+        name: Analytics API
