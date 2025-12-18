@@ -26,7 +26,6 @@ public class ChatService {
 
     private final FastApiChatClient fastApiChatClient;
     private final ChatMessageService chatMessageService;
-    private final SessionReportService sessionReportService;
     private final ObjectMapper objectMapper;
 
     public Flux<ServerSentEvent<String>> streamChat(ChatRequest request) {
@@ -100,32 +99,12 @@ public class ChatService {
 
         log.info("세션 완료 감지 - sessionId: {}", request.getSessionId());
 
-        Sinks.Many<String> reportSink = Sinks.many().unicast().onBackpressureBuffer();
-        sessionReportService.registerReportSink(request.getSessionId(), reportSink);
-
-        Flux<ServerSentEvent<String>> reportFlux = reportSink.asFlux()
-                .map(markdown -> createReportEvent(request.getSessionId(), markdown))
-                .doOnNext(event -> log.info("리포트 SSE 이벤트 생성 - sessionId: {}", request.getSessionId()));
-
-        triggerReportGeneration(request.getUserId(), request.getSessionId());
-
         ServerSentEvent<String> chatEndEvent = createChatEndEvent(request.getSessionId());
 
         return saveAndStreamResponse(savedMessage, response)
-                .concatWith(Flux.just(chatEndEvent))
-                .concatWith(reportFlux);
+                .concatWith(Flux.just(chatEndEvent));
     }
 
-    private void triggerReportGeneration(String userId, String sessionId) {
-        log.info("백그라운드 리포트 생성 시작 - sessionId: {}", sessionId);
-
-        sessionReportService.generateReportAsync(userId, sessionId)
-                .subscribe(
-                        null,
-                        error -> log.error("백그라운드 리포트 생성 실패: {}", error.getMessage()),
-                        () -> log.info("백그라운드 리포트 생성 작업 완료 - sessionId: {}", sessionId)
-                );
-    }
 
     private Flux<ServerSentEvent<String>> saveAndStreamResponse(
             ChatMessage savedMessage,
@@ -165,10 +144,6 @@ public class ChatService {
         return toServerSentEvent(event);
     }
 
-    private ServerSentEvent<String> createReportEvent(String sessionId, String markdown) {
-        SseEvent event = SseEvent.report(sessionId, markdown);
-        return toServerSentEvent(event);
-    }
 
     private ServerSentEvent<String> toServerSentEvent(SseEvent event) {
         try {

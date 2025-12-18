@@ -10,14 +10,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -27,31 +24,47 @@ public class SessionReportService {
     private final FastApiReportClient fastApiReportClient;
     private final SessionReportRepository sessionReportRepository;
     private final ChatMessageService chatMessageService;
-    private final Map<String, Sinks.Many<String>> reportSinks = new ConcurrentHashMap<>();
 
-    public Mono<Void> generateReportAsync(String userId, String sessionId) {
-        log.info("비동기 리포트 생성 시작 - userId: {}, sessionId: {}", userId, sessionId);
+    public Mono<SessionReport> generateReport(String sessionId) {
+        log.info("리포트 생성 시작 - sessionId: {}", sessionId);
 
-        return createPendingReport(userId, sessionId)
-                .flatMap(report -> buildReportRequest(userId, sessionId)
-                        .flatMap(request -> fastApiReportClient.generateReport(request)
-                                .flatMap(reportResponse -> updateCompletedReport(report.getId(), reportResponse)
-                                        .doOnSuccess(savedReport -> emitReportMarkdown(sessionId, reportResponse.getReport()))
-                                )
-                                .onErrorResume(error -> {
-                                    log.error("리포트 생성 실패 - sessionId: {}, error: {}", sessionId, error.getMessage());
-                                    return updateFailedReport(report.getId());
-                                })
-                        )
-                )
-                .subscribeOn(Schedulers.boundedElastic())
-                .doOnSuccess(v -> log.info("비동기 리포트 생성 완료 - sessionId: {}", sessionId))
-                .doFinally(signal -> cleanupSink(sessionId))
-                .then();
+        return sessionReportRepository.findBySessionId(sessionId)
+                .flatMap(existingReport -> {
+                    if (existingReport.getStatus() == SessionReport.ReportStatus.COMPLETED) {
+                        log.info("이미 완료된 리포트 존재 - sessionId: {}", sessionId);
+                        return Mono.just(existingReport);
+                    }
+                    return regenerateReport(sessionId, existingReport);
+                })
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.info("신규 리포트 생성 - sessionId: {}", sessionId);
+                    return getUserIdFromMessages(sessionId)
+                            .flatMap(userId -> createPendingReport(userId, sessionId)
+                                    .flatMap(report -> regenerateReport(sessionId, report)));
+                }))
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
-    private Mono<FastApiChatRequest> buildReportRequest(String userId, String sessionId) {
-        return chatMessageService.findByUserIdAndSessionId(userId, sessionId)
+    private Mono<String> getUserIdFromMessages(String sessionId) {
+        return chatMessageService.getChatHistory(sessionId)
+                .next()
+                .map(ChatMessage::getUserId)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("해당 세션에 메시지가 없습니다: " + sessionId)));
+    }
+
+    private Mono<SessionReport> regenerateReport(String sessionId, SessionReport report) {
+        return buildReportRequest(sessionId)
+                .flatMap(request -> fastApiReportClient.generateReport(request)
+                        .flatMap(reportResponse -> updateCompletedReport(report.getId(), reportResponse))
+                        .onErrorResume(error -> {
+                            log.error("리포트 생성 실패 - sessionId: {}, error: {}", sessionId, error.getMessage());
+                            return updateFailedReport(report.getId());
+                        })
+                );
+    }
+
+    private Mono<FastApiChatRequest> buildReportRequest(String sessionId) {
+        return chatMessageService.getChatHistory(sessionId)
                 .filter(msg -> msg.getStatus() == ChatMessage.MessageStatus.COMPLETED)
                 .collectList()
                 .map(messages -> {
@@ -105,26 +118,4 @@ public class SessionReportService {
                 .doOnSuccess(saved -> log.debug("리포트 실패 업데이트: {}", saved.getId()));
     }
 
-    private void emitReportMarkdown(String sessionId, String markdown) {
-        Sinks.Many<String> sink = reportSinks.get(sessionId);
-        if (sink != null) {
-            log.debug("리포트 Markdown 전송 - sessionId: {}", sessionId);
-            sink.tryEmitNext(markdown);
-            sink.tryEmitComplete();
-        }
-    }
-
-    private void cleanupSink(String sessionId) {
-        reportSinks.remove(sessionId);
-        log.debug("리포트 Sink 정리 - sessionId: {}", sessionId);
-    }
-
-    public void registerReportSink(String sessionId, Sinks.Many<String> sink) {
-        reportSinks.put(sessionId, sink);
-        log.debug("리포트 Sink 등록 - sessionId: {}", sessionId);
-    }
-
-    public Mono<SessionReport> getReportBySessionId(String sessionId) {
-        return sessionReportRepository.findBySessionId(sessionId);
-    }
 }
