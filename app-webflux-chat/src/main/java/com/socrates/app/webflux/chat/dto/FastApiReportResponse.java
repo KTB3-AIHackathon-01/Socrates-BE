@@ -12,9 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class FastApiReportResponse {
 
-    @JsonProperty("markdown")
-    private String markdown;
+    private Boolean success;
 
-    @JsonProperty("json")
-    private String json;
+    @JsonProperty("report")
+    private String report;
 }
