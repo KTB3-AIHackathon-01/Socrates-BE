@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,11 +58,11 @@ public class ChatSessionController {
                     content = @Content(schema = @Schema(implementation = ChatSessionResponse.class)))
     })
     @GetMapping("/student")
-    public ResponseEntity<Page<ChatSessionResponse>> getChatSessionList(
+    public ResponseEntity<PagedModel<ChatSessionResponse>> getChatSessionList(
             @RequestHeader("X-Student-Id") UUID studentId,
             @RequestParam("page") int page,
             @RequestParam("size") int size) {
-        Page<ChatSessionResponse> response = chatSessionService.getChatSessions(studentId, page, size);
+        PagedModel<ChatSessionResponse> response = chatSessionService.getChatSessions(studentId, page, size);
         return ResponseEntity.ok(response);
     }
 }

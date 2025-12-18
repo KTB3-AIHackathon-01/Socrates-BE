@@ -6,10 +6,10 @@ import com.socrates.app.mvc.analytics.chat.repository.ChatMessageRepository;
 import com.socrates.app.mvc.analytics.chat.repository.ChatSessionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +23,7 @@ public class ChatMessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatSessionRepository chatSessionRepository;
 
-    public Page<ChatMessageResponse> getMessagesBySessionId(UUID sessionId, UUID studentId, int pageNumber, int pageSize) {
+    public PagedModel<ChatMessageResponse> getMessagesBySessionId(UUID sessionId, UUID studentId, int pageNumber, int pageSize) {
         ChatSession chatSession = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session Id: " + sessionId));
 
@@ -33,7 +33,7 @@ public class ChatMessageService {
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        return chatMessageRepository.findBySessionIdOrderByCreatedAtDesc(sessionId.toString(), pageable)
-                .map(ChatMessageResponse::from);
+        return new PagedModel<>(chatMessageRepository.findBySessionIdOrderByCreatedAtDesc(sessionId.toString(), pageable)
+                .map(ChatMessageResponse::from));
     }
 }

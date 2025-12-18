@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,7 +46,7 @@ public class ChatSessionService {
         return ChatSessionResponse.from(session);
     }
 
-    public Page<ChatSessionResponse> getChatSessions(UUID studentId, int pageNumber, int pageSize) {
+    public PagedModel<ChatSessionResponse> getChatSessions(UUID studentId, int pageNumber, int pageSize) {
         if (!studentRepository.existsById(studentId)) {
             throw new EntityNotFoundException("Student not found: " + studentId);
         }
@@ -53,6 +54,6 @@ public class ChatSessionService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<ChatSession> chatSessions = chatSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId, pageable);
 
-        return chatSessions.map(ChatSessionResponse::from);
+        return new PagedModel<>(chatSessions.map(ChatSessionResponse::from));
     }
 }

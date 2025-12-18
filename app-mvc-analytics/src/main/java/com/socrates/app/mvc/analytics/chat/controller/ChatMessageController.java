@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,12 +29,12 @@ public class ChatMessageController {
                     content = @Content(schema = @Schema(implementation = ChatMessageResponse.class)))
     })
     @GetMapping("/session/{sessionId}")
-    public ResponseEntity<Page<ChatMessageResponse>> getMessagesBySessionId(
+    public ResponseEntity<PagedModel<ChatMessageResponse>> getMessagesBySessionId(
             @PathVariable UUID sessionId,
             @RequestHeader("X-Student-Id") UUID studentId,
             @RequestParam("page") int page,
             @RequestParam("size") int size) {
-        Page<ChatMessageResponse> response = chatMessageService.getMessagesBySessionId(sessionId, studentId, page, size);
+        PagedModel<ChatMessageResponse> response = chatMessageService.getMessagesBySessionId(sessionId, studentId, page, size);
         return ResponseEntity.ok(response);
     }
 }
