@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +49,20 @@ public class ChatSessionController {
     @GetMapping("/{sessionId}")
     public ResponseEntity<ChatSessionResponse> getChatSession(@PathVariable UUID sessionId) {
         ChatSessionResponse response = chatSessionService.getChatSession(sessionId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "학생별 채팅 목록 조회", description = "학생별 세션 목록을 페이지로 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "세션 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ChatSessionResponse.class)))
+    })
+    @GetMapping("/student")
+    public ResponseEntity<Page<ChatSessionResponse>> getChatSessionList(
+            @RequestHeader("X-Student-Id") UUID studentId,
+            @RequestParam("page") int page,
+            @RequestParam("size") int size) {
+        Page<ChatSessionResponse> response = chatSessionService.getChatSessions(studentId, page, size);
         return ResponseEntity.ok(response);
     }
 }

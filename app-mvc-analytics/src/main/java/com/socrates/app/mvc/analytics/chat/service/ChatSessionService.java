@@ -8,12 +8,16 @@ import com.socrates.app.mvc.analytics.student.domain.Student;
 import com.socrates.app.mvc.analytics.student.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Service
 public class ChatSessionService {
 
@@ -35,10 +39,20 @@ public class ChatSessionService {
         return ChatSessionResponse.from(savedSession);
     }
 
-    @Transactional(readOnly = true)
     public ChatSessionResponse getChatSession(UUID sessionId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Chat session not found: " + sessionId));
         return ChatSessionResponse.from(session);
+    }
+
+    public Page<ChatSessionResponse> getChatSessions(UUID studentId, int pageNumber, int pageSize) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new EntityNotFoundException("Student not found: " + studentId);
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<ChatSession> chatSessions = chatSessionRepository.findByStudentIdOrderByStartedAtDesc(studentId, pageable);
+
+        return chatSessions.map(ChatSessionResponse::from);
     }
 }
