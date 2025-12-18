@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: webflux-chat
+
+fastapi:
+  base-url: http://localhost:8000
+  timeout: 60000
+
+logging:
+  level:
+    root: INFO
+    com.socrates: DEBUG
