@@ -9,15 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatResponse {
+public class FastApiChatResponse {
 
     private String content;
-
-    private String role;
-
-    private String sessionId;
-
-    private Long timestamp;
 
     private Boolean isComplete;
 }
