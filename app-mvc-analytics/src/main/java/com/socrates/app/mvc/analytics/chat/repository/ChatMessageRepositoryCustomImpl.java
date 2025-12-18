@@ -23,6 +23,8 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
     private final MongoTemplate mongoTemplate;
 
     private static final String COLLECTION_NAME = "chat_messages";
+    private static final DateOperators.Timezone DEFAULT_TIMEZONE =
+            DateOperators.Timezone.valueOf("Asia/Seoul");
 
     @Override
     public long countMessagesByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
@@ -51,7 +53,9 @@ public class ChatMessageRepositoryCustomImpl implements ChatMessageRepositoryCus
         Aggregation aggregation = newAggregation(
                 match(Criteria.where("createdAt").gte(startDate).lte(endDate)),
                 project()
-                        .and(DateOperators.DateToString.dateOf("createdAt").toString("%Y-%m-%d")).as("date"),
+                        .and(DateOperators.DateToString.dateOf("createdAt")
+                                .toString("%Y-%m-%d")
+                                .withTimezone(DEFAULT_TIMEZONE)).as("date"),
                 group("date").count().as("messageCount"),
                 sort(Sort.Direction.ASC, "_id"),
                 project()
