@@ -53,7 +53,7 @@ ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.securit
 
 # 헬스체크 (정적 포트가 아닌 환경 변수 활용)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/actuator/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/chat/health || exit 1
 
 EXPOSE ${PORT}
 

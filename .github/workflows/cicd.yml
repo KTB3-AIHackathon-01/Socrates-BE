@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECS_CLUSTER: socrates-cluster
+  ECS_CLUSTER: hackerthon-cluster
   CHAT_REPO: tf1/socrates-chat
   CHAT_SERVICE: socrates-chat-service
   CHAT_TASK: socrates-chat-task
