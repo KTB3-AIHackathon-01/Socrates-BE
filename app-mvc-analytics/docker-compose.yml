@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  analytics-app:
+    depends_on:
+      - postgresql
+      - mongodb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: analytics-app
+    ports:
+      - "8081:8080"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/chatdb
+      - POSTGRESQL_URI=jdbc:postgresql://postgresql:5432/socrates
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    #environment:
+    # 인증을 비활성화하려면 이 부분을 생략하거나 주석 처리
+    # MONGO_INITDB_ROOT_USERNAME: admin
+    # MONGO_INITDB_ROOT_PASSWORD: password
+
+  postgresql:
+    image: postgres:latest
+    container_name: postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=socrates
+volumes:
+  mongodb_data:

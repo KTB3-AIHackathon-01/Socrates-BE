@@ -5,7 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
+import java.util.Optional;
+
+public interface ChatMessageRepository extends MongoRepository<ChatMessage, String>,
+        ChatMessageRepositoryCustom {
 
     Page<ChatMessage> findBySessionIdOrderByCreatedAtDesc(String sessionId, Pageable pageable);
+
+    long countByUserId(String userId);
+
+    Optional<ChatMessage> findTopByUserIdOrderByCreatedAtDesc(String userId);
 }
