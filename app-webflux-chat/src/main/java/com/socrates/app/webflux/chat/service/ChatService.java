@@ -22,7 +22,7 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
 
     public Flux<ServerSentEvent<String>> streamChat(ChatRequest request) {
-        log.info("Processing chat stream for user: {}", request.getUserId());
+        log.info("사용자 채팅 스트림 처리 시작: {}", request.getUserId());
 
         return savePendingMessage(request)
                 .flatMapMany(savedMessage ->
@@ -36,12 +36,12 @@ public class ChatService {
                                 .map(data -> ServerSentEvent.<String>builder()
                                         .data(data)
                                         .build())
-                                .doOnNext(sse -> log.debug("Streaming response: {}", sse.data()))
+                                .doOnNext(sse -> log.debug("응답 스트림 전송: {}", sse.data()))
                                 .doOnError(error -> {
-                                    log.error("Chat stream error: {}", error.getMessage());
+                                    log.error("채팅 스트림 오류 발생: {}", error.getMessage());
                                     updateFailedMessage(savedMessage.getId()).subscribe();
                                 })
-                                .doOnComplete(() -> log.info("Chat stream completed for user: {}", request.getUserId()))
+                                .doOnComplete(() -> log.info("사용자 채팅 스트림 처리 완료: {}", request.getUserId()))
                 );
     }
 
@@ -55,7 +55,7 @@ public class ChatService {
                 .build();
 
         return chatMessageRepository.save(message)
-                .doOnSuccess(saved -> log.debug("Saved pending message: {}", saved.getId()));
+                .doOnSuccess(saved -> log.debug("대기 중 메시지 저장 완료: {}", saved.getId()));
     }
 
     private Mono<ChatMessage> updateCompletedMessage(String messageId, String assistantMessage) {
@@ -66,7 +66,7 @@ public class ChatService {
                     message.setStatus(ChatMessage.MessageStatus.COMPLETED);
                     return chatMessageRepository.save(message);
                 })
-                .doOnSuccess(saved -> log.debug("Updated completed message: {}", saved.getId()));
+                .doOnSuccess(saved -> log.debug("완료된 메시지 업데이트 완료: {}", saved.getId()));
     }
 
     private Mono<ChatMessage> updateFailedMessage(String messageId) {
@@ -76,6 +76,6 @@ public class ChatService {
                     message.setCompletedAt(LocalDateTime.now());
                     return chatMessageRepository.save(message);
                 })
-                .doOnSuccess(saved -> log.debug("Updated failed message: {}", saved.getId()));
+                .doOnSuccess(saved -> log.debug("실패한 메시지 업데이트 완료: {}", saved.getId()));
     }
 }

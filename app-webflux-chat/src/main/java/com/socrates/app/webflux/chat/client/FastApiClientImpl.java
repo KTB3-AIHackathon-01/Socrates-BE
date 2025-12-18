@@ -17,7 +17,7 @@ public class FastApiClientImpl implements FastApiClient {
 
     @Override
     public Flux<String> streamChat(ChatRequest request) {
-        log.debug("Calling FastAPI chat stream with request: {}", request);
+        log.debug("FastAPI 채팅 스트림 호출 시작, 요청: {}", request);
 
         return fastapiWebClient.post()
                 .uri("/chat/stream")
@@ -26,8 +26,8 @@ public class FastApiClientImpl implements FastApiClient {
                 .accept(MediaType.TEXT_EVENT_STREAM)
                 .retrieve()
                 .bodyToFlux(String.class)
-                .doOnNext(data -> log.trace("Received data from FastAPI: {}", data))
-                .doOnError(error -> log.error("FastAPI error: {}", error.getMessage(), error))
-                .doOnComplete(() -> log.debug("FastAPI stream completed"));
+                .doOnNext(data -> log.trace("FastAPI로부터 데이터 수신: {}", data))
+                .doOnError(error -> log.error("FastAPI 오류 발생: {}", error.getMessage(), error))
+                .doOnComplete(() -> log.debug("FastAPI 스트림 종료"));
     }
 }
