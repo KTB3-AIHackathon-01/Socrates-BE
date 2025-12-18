@@ -2,7 +2,7 @@ name: CI/CD Pipeline - Socrates-BE Deployment
 
 on:
   push:
-    branches: [ "main", "develop", "feature/cicd1" ]
+    branches: [ "main", "feature/cicd1" ]
 
 env:
   AWS_REGION: ap-northeast-2
@@ -35,7 +35,7 @@ jobs:
   build-and-deploy-chat:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feature/cicd1'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/cicd1'
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
@@ -68,6 +68,8 @@ jobs:
         env:
           SERVER_PORT: "8080"
           MONGODB_URI: ${{ secrets.CHAT_MONGODB_URI }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          FASTAPI_BASE_URL: ${{ secrets.FASTAPI_BASE_URL }}
         run: |
           aws ecs describe-task-definition --task-definition ${{ env.CHAT_TASK }} --query taskDefinition > raw-task-def.json
           cat raw-task-def.json | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' > task-definition.json
@@ -78,10 +80,14 @@ jobs:
           cat task-definition.json | jq --arg IMAGE "$NEW_IMAGE" \
             --arg SERVER_PORT "$SERVER_PORT" \
             --arg MONGODB_URI "$MONGODB_URI" \
+            --arg OPENAI_API_KEY "$OPENAI_API_KEY" \
+            --arg FASTAPI_BASE_URL "$FASTAPI_BASE_URL" \
             '.containerDefinitions[0].image = $IMAGE | 
              .containerDefinitions[0].environment = ([
                {"name": "SERVER_PORT", "value": $SERVER_PORT},
-               {"name": "MONGODB_URI", "value": $MONGODB_URI}
+               {"name": "MONGODB_URI", "value": $MONGODB_URI},
+               {"name": "OPENAI_API_KEY", "value": $OPENAI_API_KEY},
+               {"name": "FASTAPI_BASE_URL", "value": $FASTAPI_BASE_URL}
              ] | map(select(.value != "" and .value != null and .value != "null")))' > final-task-def.json
           
           NEW_TASK_INFO=$(aws ecs register-task-definition --cli-input-json file://final-task-def.json)
@@ -92,7 +98,7 @@ jobs:
   build-and-deploy-analytics:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feature/cicd1'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/cicd1'
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
