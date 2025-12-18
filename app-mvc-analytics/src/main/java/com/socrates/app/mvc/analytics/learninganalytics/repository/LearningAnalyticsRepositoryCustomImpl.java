@@ -24,6 +24,8 @@ public class LearningAnalyticsRepositoryCustomImpl implements LearningAnalyticsR
     private final MongoTemplate mongoTemplate;
 
     private static final String COLLECTION_NAME = "learning_analytics";
+    private static final DateOperators.Timezone DEFAULT_TIMEZONE =
+            DateOperators.Timezone.valueOf("Asia/Seoul");
 
     @Override
     public long countActiveStudents(LocalDateTime startDate, LocalDateTime endDate) {
@@ -125,7 +127,9 @@ public class LearningAnalyticsRepositoryCustomImpl implements LearningAnalyticsR
         Aggregation aggregation = newAggregation(
                 match(Criteria.where("updatedAt").gte(startDate).lte(endDate)),
                 project()
-                        .and(DateOperators.DateToString.dateOf("updatedAt").toString("%Y-%m-%d")).as("date")
+                        .and(DateOperators.DateToString.dateOf("updatedAt")
+                                .toString("%Y-%m-%d")
+                                .withTimezone(DEFAULT_TIMEZONE)).as("date")
                         .and("learningSummary.overallProgressScore").as("progressScore"),
                 group("date")
                         .avg("progressScore").as("avgProgress")
