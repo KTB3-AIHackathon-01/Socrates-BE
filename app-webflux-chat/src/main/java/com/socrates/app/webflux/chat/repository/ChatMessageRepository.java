@@ -11,4 +11,6 @@ public interface ChatMessageRepository extends ReactiveMongoRepository<ChatMessa
     Flux<ChatMessage> findByUserIdAndSessionIdOrderByCreatedAtDesc(String userId, String sessionId);
 
     Flux<ChatMessage> findByUserIdOrderByCreatedAtDesc(String userId);
+
+    Flux<ChatMessage> findBySessionIdOrderByCreatedAtAsc(String sessionId);
 }

@@ -68,5 +68,9 @@ public class ChatMessageService {
     public Flux<ChatMessage> findByUserIdAndSessionId(String userId, String sessionId) {
         return chatMessageRepository.findByUserIdAndSessionIdOrderByCreatedAtDesc(userId, sessionId);
     }
+
+    public Flux<ChatMessage> getChatHistory(String sessionId) {
+        return chatMessageRepository.findBySessionIdOrderByCreatedAtAsc(sessionId);
+    }
 }
 
