@@ -8,10 +8,10 @@ env:
   AWS_REGION: ap-northeast-2
   ECS_CLUSTER: hackerthon-cluster
   CHAT_REPO: tf1/socrates-chat
-  CHAT_SERVICE: socrates-chat-service
+  CHAT_SERVICE: socrates-chat-task-service
   CHAT_TASK: socrates-chat-task
   ANALYTICS_REPO: tf1/socrates-analytics
-  ANALYTICS_SERVICE: socrates-analytics-service
+  ANALYTICS_SERVICE: socrates-analytics-task-service
   ANALYTICS_TASK: socrates-analytics-task
 
 jobs:
