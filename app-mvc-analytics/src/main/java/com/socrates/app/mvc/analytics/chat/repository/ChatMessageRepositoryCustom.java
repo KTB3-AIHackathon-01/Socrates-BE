@@ -1,10 +1,7 @@
 package com.socrates.app.mvc.analytics.chat.repository;
 
 import com.socrates.app.mvc.analytics.chat.domain.ChatMessage;
-import com.socrates.app.mvc.analytics.chat.dto.DailyMessageCountDto;
-import com.socrates.app.mvc.analytics.chat.dto.HourlyMessageCountDto;
-import com.socrates.app.mvc.analytics.chat.dto.ResponseTimeStatsDto;
-import com.socrates.app.mvc.analytics.chat.dto.UserMessageStatsDto;
+import com.socrates.app.mvc.analytics.chat.dto.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,4 +32,10 @@ public interface ChatMessageRepositoryCustom {
 
     // 응답 시간 분석
     ResponseTimeStatsDto getAverageResponseTime();
+
+    // 세션별 통계
+    List<SessionMessageStatsDto> getSessionMessageStats();
+
+    // 메시지 상태별 통계
+    long countByStatus(ChatMessage.MessageStatus status);
 }
