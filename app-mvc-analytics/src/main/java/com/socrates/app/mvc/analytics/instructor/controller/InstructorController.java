@@ -23,7 +23,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/instructors")
+@RequestMapping("/api/analytics/instructors")
 @RestController
 @Tag(name = "Instructors", description = "강사 관리 API")
 public class InstructorController {
@@ -39,7 +39,7 @@ public class InstructorController {
     @PostMapping
     public ResponseEntity<InstructorResponse> createInstructor(@Valid @RequestBody InstructorRequest instructorRequest) {
         InstructorResponse response = instructorService.createInstructor(instructorRequest);
-        return ResponseEntity.created(URI.create("/api/instructors/" + response.instructorId()))
+        return ResponseEntity.created(URI.create("/api/analytics/instructors/" + response.instructorId()))
                 .body(response);
     }
 

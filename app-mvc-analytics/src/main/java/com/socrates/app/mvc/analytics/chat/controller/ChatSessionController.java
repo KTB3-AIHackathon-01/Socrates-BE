@@ -19,7 +19,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/chat/sessions")
+@RequestMapping("/api/analytics/sessions")
 @RestController
 @Tag(name = "ChatSessions", description = "채팅방 세션 관리 API")
 public class ChatSessionController {
@@ -36,7 +36,7 @@ public class ChatSessionController {
     @PostMapping
     public ResponseEntity<ChatSessionResponse> createChatSession(@Valid @RequestBody ChatSessionRequest chatSessionRequest) {
         ChatSessionResponse response = chatSessionService.createChatSession(chatSessionRequest);
-        return ResponseEntity.created(URI.create("/api/sessions/" + response.sessionId()))
+        return ResponseEntity.created(URI.create("/api/analytics/sessions/" + response.sessionId()))
                 .body(response);
     }
 

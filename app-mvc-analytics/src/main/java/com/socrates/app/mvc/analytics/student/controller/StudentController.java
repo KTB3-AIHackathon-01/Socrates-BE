@@ -17,7 +17,7 @@ import java.net.URI;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/students")
+@RequestMapping("/api/analytics/students")
 @RestController
 @Tag(name = "Students", description = "학생 관리 API")
 public class StudentController {
@@ -33,7 +33,7 @@ public class StudentController {
     @PostMapping
     public ResponseEntity<StudentResponse> createStudent(@Valid @RequestBody StudentRequest studentRequest) {
         StudentResponse response = studentService.createStudent(studentRequest);
-        return ResponseEntity.created(URI.create("/api/students/" + response.studentId()))
+        return ResponseEntity.created(URI.create("/api/analytics/students/" + response.studentId()))
                 .body(response);
     }
 
