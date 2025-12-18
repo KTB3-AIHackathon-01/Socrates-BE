@@ -33,6 +33,8 @@ public class ChatSessionService {
         student.updateLastActivityAt();
 
         ChatSession chatSession = ChatSession.builder()
+                .id(chatSessionRequest.sessionId())
+                .name(chatSessionRequest.name())
                 .student(student)
                 .build();
 
