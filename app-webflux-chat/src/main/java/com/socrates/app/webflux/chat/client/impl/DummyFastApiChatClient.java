@@ -10,20 +10,25 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
 @Primary
 public class DummyFastApiChatClient implements FastApiChatClient {
 
-    private int callCount = 0;
+    private final Map<String, Integer> sessionCounts = new ConcurrentHashMap<>();
 
     @Override
     public Flux<FastApiChatResponse> streamChat(ChatRequest request) {
         log.info("더미 FastAPI 클라이언트 호출 - userId: {}, sessionId: {}, message: {}",
                 request.getUserId(), request.getSessionId(), request.getMessage());
 
-        callCount++;
+        String sessionId = request.getSessionId();
+        int count = sessionCounts.merge(sessionId, 1, Integer::sum);
+        boolean isComplete = count >= 5;
+
         String message = request.getMessage() == null ? "" : request.getMessage();
 
         FastApiChatResponse response1 = FastApiChatResponse.builder()
@@ -32,13 +37,17 @@ public class DummyFastApiChatClient implements FastApiChatClient {
                 .build();
 
         FastApiChatResponse response2 = FastApiChatResponse.builder()
-                .content(" (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ")")
-                .isComplete(callCount % 3 == 0)
+                .content(" (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5)")
+                .isComplete(isComplete)
                 .build();
+
+        if (isComplete) {
+            sessionCounts.remove(sessionId);
+        }
 
         return Flux.just(response1, response2)
                 .delayElements(Duration.ofMillis(300))
-                .doOnComplete(() -> log.info("더미 FastAPI 응답 완료 - isComplete: {}", response2.getIsComplete()));
+                .doOnComplete(() -> log.info("더미 FastAPI 응답 완료 - count: {}/5, isComplete: {}", count, isComplete));
     }
 
     @Override
@@ -46,17 +55,24 @@ public class DummyFastApiChatClient implements FastApiChatClient {
         log.info("더미 FastAPI Mono 클라이언트 호출 - userId: {}, sessionId: {}, message: {}",
                 request.getUserId(), request.getSessionId(), request.getMessage());
 
-        callCount++;
+        String sessionId = request.getSessionId();
+        int count = sessionCounts.merge(sessionId, 1, Integer::sum);
+        boolean isComplete = count >= 5;
+
         String message = request.getMessage() == null ? "" : request.getMessage();
 
         FastApiChatResponse response = FastApiChatResponse.builder()
-                .content("더미 응답입니다. 입력하신 메시지: " + message + " (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ")")
-                .isComplete(callCount % 3 == 0)
+                .content("더미 응답입니다. 입력하신 메시지: " + message + " (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5)")
+                .isComplete(isComplete)
                 .build();
+
+        if (isComplete) {
+            sessionCounts.remove(sessionId);
+        }
 
         return Mono.just(response)
                 .delayElement(Duration.ofMillis(500))
-                .doOnSuccess(r -> log.info("더미 FastAPI Mono 응답 완료 - isComplete: {}", r.getIsComplete()));
+                .doOnSuccess(r -> log.info("더미 FastAPI Mono 응답 완료 - count: {}/5, isComplete: {}", count, r.getIsComplete()));
     }
 }
 

@@ -25,6 +25,8 @@ public class SessionReport {
 
     private String reportData;
 
+    private String reportJson;
+
     private LocalDateTime createdAt;
 
     @Builder.Default
