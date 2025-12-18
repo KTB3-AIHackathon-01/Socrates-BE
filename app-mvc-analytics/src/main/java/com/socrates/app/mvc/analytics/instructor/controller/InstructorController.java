@@ -4,6 +4,7 @@ import com.socrates.app.mvc.analytics.instructor.dto.InstructorRequest;
 import com.socrates.app.mvc.analytics.instructor.dto.InstructorResponse;
 import com.socrates.app.mvc.analytics.instructor.service.InstructorService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -52,6 +54,17 @@ public class InstructorController {
     @GetMapping("/me")
     public ResponseEntity<InstructorResponse> getInstructor(@RequestHeader("X-Instructor-Id") UUID instructorId) {
         InstructorResponse response = instructorService.getInstructor(instructorId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "강사 목록 조회", description = "등록된 모든 강사를 조회합니다. (페이징 없음)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "강사 목록 조회 성공",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = InstructorResponse.class))))
+    })
+    @GetMapping
+    public ResponseEntity<List<InstructorResponse>> getInstructors() {
+        List<InstructorResponse> response = instructorService.getInstructors();
         return ResponseEntity.ok(response);
     }
 }
