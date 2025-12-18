@@ -1,7 +1,9 @@
 package com.socrates.app.webflux.chat.service;
 
 import com.socrates.app.webflux.chat.client.FastApiReportClient;
+import com.socrates.app.webflux.chat.domain.ChatMessage;
 import com.socrates.app.webflux.chat.domain.SessionReport;
+import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiReportResponse;
 import com.socrates.app.webflux.chat.repository.SessionReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,8 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,25 +26,51 @@ public class SessionReportService {
 
     private final FastApiReportClient fastApiReportClient;
     private final SessionReportRepository sessionReportRepository;
+    private final ChatMessageService chatMessageService;
     private final Map<String, Sinks.Many<String>> reportSinks = new ConcurrentHashMap<>();
 
     public Mono<Void> generateReportAsync(String userId, String sessionId) {
         log.info("비동기 리포트 생성 시작 - userId: {}, sessionId: {}", userId, sessionId);
 
         return createPendingReport(userId, sessionId)
-                .flatMap(report -> fastApiReportClient.generateReport(sessionId)
-                        .flatMap(reportResponse -> updateCompletedReport(report.getId(), reportResponse)
-                                .doOnSuccess(savedReport -> emitReportMarkdown(sessionId, reportResponse.getMarkdown()))
+                .flatMap(report -> buildReportRequest(userId, sessionId)
+                        .flatMap(request -> fastApiReportClient.generateReport(request)
+                                .flatMap(reportResponse -> updateCompletedReport(report.getId(), reportResponse)
+                                        .doOnSuccess(savedReport -> emitReportMarkdown(sessionId, reportResponse.getReport()))
+                                )
+                                .onErrorResume(error -> {
+                                    log.error("리포트 생성 실패 - sessionId: {}, error: {}", sessionId, error.getMessage());
+                                    return updateFailedReport(report.getId());
+                                })
                         )
-                        .onErrorResume(error -> {
-                            log.error("리포트 생성 실패 - sessionId: {}, error: {}", sessionId, error.getMessage());
-                            return updateFailedReport(report.getId());
-                        })
                 )
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess(v -> log.info("비동기 리포트 생성 완료 - sessionId: {}", sessionId))
                 .doFinally(signal -> cleanupSink(sessionId))
                 .then();
+    }
+
+    private Mono<FastApiChatRequest> buildReportRequest(String userId, String sessionId) {
+        return chatMessageService.findByUserIdAndSessionId(userId, sessionId)
+                .filter(msg -> msg.getStatus() == ChatMessage.MessageStatus.COMPLETED)
+                .collectList()
+                .map(messages -> {
+                    List<String> userInputList = new ArrayList<>();
+                    for (ChatMessage msg : messages) {
+                        userInputList.add(msg.getUserMessage());
+                        userInputList.add(msg.getAssistantMessage());
+                    }
+
+                    FastApiChatRequest.DataWrapper dataWrapper = FastApiChatRequest.DataWrapper.builder()
+                            .user_input(userInputList)
+                            .build();
+
+                    return FastApiChatRequest.builder()
+                            .data(dataWrapper)
+                            .build();
+                })
+                .doOnSuccess(request -> log.debug("리포트 요청 생성 완료 - sessionId: {}, messageCount: {}",
+                        sessionId, request.getData().getUser_input().size()));
     }
 
     private Mono<SessionReport> createPendingReport(String userId, String sessionId) {
@@ -58,8 +88,8 @@ public class SessionReportService {
     private Mono<SessionReport> updateCompletedReport(String reportId, FastApiReportResponse reportResponse) {
         return sessionReportRepository.findById(reportId)
                 .flatMap(report -> {
-                    report.setReportData(reportResponse.getMarkdown());
-                    report.setReportJson(reportResponse.getJson());
+                    report.setReportData(reportResponse.getReport());
+                    report.setReportJson(null);
                     report.setStatus(SessionReport.ReportStatus.COMPLETED);
                     return sessionReportRepository.save(report);
                 })

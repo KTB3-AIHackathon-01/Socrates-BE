@@ -1,6 +1,7 @@
 package com.socrates.app.webflux.chat.client.impl;
 
 import com.socrates.app.webflux.chat.client.FastApiReportClient;
+import com.socrates.app.webflux.chat.dto.FastApiChatRequest;
 import com.socrates.app.webflux.chat.dto.FastApiReportResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,16 +20,16 @@ public class FastApiReportClientImpl implements FastApiReportClient {
     private final WebClient fastapiWebClient;
 
     @Override
-    public Mono<FastApiReportResponse> generateReport(String sessionId) {
-        log.info("FastAPI Report 클라이언트 호출 - sessionId: {}", sessionId);
+    public Mono<FastApiReportResponse> generateReport(FastApiChatRequest request) {
+        log.info("FastAPI Report 클라이언트 호출 - request: {}", request);
 
         return fastapiWebClient.post()
-                .uri("/api/report/{sessionId}", sessionId)
+                .uri("/chat/report")
                 .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
                 .retrieve()
                 .bodyToMono(FastApiReportResponse.class)
-                .doOnSuccess(report -> log.info("FastAPI Report 생성 완료 - sessionId: {}", sessionId))
-                .doOnError(error -> log.error("FastAPI Report 생성 실패 - sessionId: {}, error: {}",
-                        sessionId, error.getMessage(), error));
+                .doOnSuccess(report -> log.info("FastAPI Report 생성 완료"))
+                .doOnError(error -> log.error("FastAPI Report 생성 실패 - error: {}", error.getMessage(), error));
     }
 }
