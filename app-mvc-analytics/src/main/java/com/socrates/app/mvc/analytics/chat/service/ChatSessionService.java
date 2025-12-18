@@ -43,7 +43,7 @@ public class ChatSessionService {
         return ChatSessionResponse.from(savedSession);
     }
 
-    public ChatSessionResponse getChatSession(UUID sessionId) {
+    public ChatSessionResponse getChatSession(String sessionId) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(ChatSessionNotFoundException::new);
         return ChatSessionResponse.from(session);

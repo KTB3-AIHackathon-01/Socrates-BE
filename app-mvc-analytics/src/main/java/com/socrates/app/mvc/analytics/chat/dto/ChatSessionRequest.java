@@ -9,7 +9,7 @@ import java.util.UUID;
 public record ChatSessionRequest(
         @Schema(description = "세션 ID", format = "uuid")
         @NotNull
-        UUID sessionId,
+        String sessionId,
         @Schema(description = "세션을 생성할 학생 ID", format = "uuid")
         @NotNull
         UUID studentId,
