@@ -4,6 +4,7 @@ import com.socrates.app.webflux.chat.client.FastApiReportClient;
 import com.socrates.app.webflux.chat.dto.FastApiReportResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Primary
 public class FastApiReportClientImpl implements FastApiReportClient {
 
     private final WebClient fastapiWebClient;

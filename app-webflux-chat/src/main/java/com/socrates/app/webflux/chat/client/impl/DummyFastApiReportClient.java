@@ -3,7 +3,6 @@ package com.socrates.app.webflux.chat.client.impl;
 import com.socrates.app.webflux.chat.client.FastApiReportClient;
 import com.socrates.app.webflux.chat.dto.FastApiReportResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -11,7 +10,6 @@ import java.time.Duration;
 
 @Slf4j
 @Component
-@Primary
 public class DummyFastApiReportClient implements FastApiReportClient {
 
     @Override
