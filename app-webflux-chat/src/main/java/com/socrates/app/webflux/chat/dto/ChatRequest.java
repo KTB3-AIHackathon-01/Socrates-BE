@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -18,4 +20,15 @@ public class ChatRequest {
     private String userId;
 
     private String sessionId;
+
+    private List<ChatHistoryItem> history;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChatHistoryItem {
+        private String userMessage;
+        private String assistantMessage;
+    }
 }

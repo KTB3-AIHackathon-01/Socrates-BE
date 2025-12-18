@@ -1,7 +1,9 @@
 package com.socrates.app.webflux.chat.controller;
 
+import com.socrates.app.webflux.chat.dto.ChatHistoryResponse;
 import com.socrates.app.webflux.chat.dto.ChatRequest;
 import com.socrates.app.webflux.chat.dto.ChatTitleResponse;
+import com.socrates.app.webflux.chat.service.ChatMessageService;
 import com.socrates.app.webflux.chat.service.ChatService;
 import com.socrates.app.webflux.chat.service.ChatTitleService;
 import jakarta.validation.Valid;
@@ -21,6 +23,7 @@ public class ChatController {
 
     private final ChatService chatService;
     private final ChatTitleService chatTitleService;
+    private final ChatMessageService chatMessageService;
 
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> streamChat(@Valid @RequestBody ChatRequest request) {
@@ -37,6 +40,22 @@ public class ChatController {
         return chatTitleService.generateChatRoomTitle(request.getMessage())
                 .map(title -> ChatTitleResponse.builder()
                         .title(title)
+                        .build());
+    }
+
+    @GetMapping("/history/{sessionId}")
+    public Flux<ChatHistoryResponse> getChatHistory(@PathVariable String sessionId) {
+        log.info("채팅 기록 조회 요청 - sessionId: {}", sessionId);
+
+        return chatMessageService.getChatHistory(sessionId)
+                .map(message -> ChatHistoryResponse.builder()
+                        .id(message.getId())
+                        .userMessage(message.getUserMessage())
+                        .assistantMessage(message.getAssistantMessage())
+                        .createdAt(message.getCreatedAt())
+                        .completedAt(message.getCompletedAt())
+                        .status(message.getStatus() != null ? message.getStatus().name() : null)
+                        .isComplete(message.getIsComplete())
                         .build());
     }
 

@@ -22,8 +22,9 @@ public class DummyFastApiChatClient implements FastApiChatClient {
 
     @Override
     public Flux<FastApiChatResponse> streamChat(ChatRequest request) {
-        log.info("더미 FastAPI 클라이언트 호출 - userId: {}, sessionId: {}, message: {}",
-                request.getUserId(), request.getSessionId(), request.getMessage());
+        log.info("더미 FastAPI 클라이언트 호출 - userId: {}, sessionId: {}, message: {}, historyCount: {}",
+                request.getUserId(), request.getSessionId(), request.getMessage(),
+                request.getHistory() != null ? request.getHistory().size() : 0);
 
         String sessionId = request.getSessionId();
         int count = sessionCounts.merge(sessionId, 1, Integer::sum);
@@ -37,7 +38,8 @@ public class DummyFastApiChatClient implements FastApiChatClient {
                 .build();
 
         FastApiChatResponse response2 = FastApiChatResponse.builder()
-                .content(" (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5)")
+                .content(" (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5, history: " +
+                        (request.getHistory() != null ? request.getHistory().size() : 0) + ")")
                 .isComplete(isComplete)
                 .build();
 
@@ -52,8 +54,9 @@ public class DummyFastApiChatClient implements FastApiChatClient {
 
     @Override
     public Mono<FastApiChatResponse> chat(ChatRequest request) {
-        log.info("더미 FastAPI Mono 클라이언트 호출 - userId: {}, sessionId: {}, message: {}",
-                request.getUserId(), request.getSessionId(), request.getMessage());
+        log.info("더미 FastAPI Mono 클라이언트 호출 - userId: {}, sessionId: {}, message: {}, historyCount: {}",
+                request.getUserId(), request.getSessionId(), request.getMessage(),
+                request.getHistory() != null ? request.getHistory().size() : 0);
 
         String sessionId = request.getSessionId();
         int count = sessionCounts.merge(sessionId, 1, Integer::sum);
@@ -62,7 +65,8 @@ public class DummyFastApiChatClient implements FastApiChatClient {
         String message = request.getMessage() == null ? "" : request.getMessage();
 
         FastApiChatResponse response = FastApiChatResponse.builder()
-                .content("더미 응답입니다. 입력하신 메시지: " + message + " (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5)")
+                .content("더미 응답입니다. 입력하신 메시지: " + message + " (userId=" + request.getUserId() + ", sessionId=" + request.getSessionId() + ", count=" + count + "/5, history: " +
+                        (request.getHistory() != null ? request.getHistory().size() : 0) + ")")
                 .isComplete(isComplete)
                 .build();
 
