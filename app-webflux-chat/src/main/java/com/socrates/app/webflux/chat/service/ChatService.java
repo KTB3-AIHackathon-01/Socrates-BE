@@ -32,26 +32,15 @@ public class ChatService {
     public Flux<ServerSentEvent<String>> streamChat(ChatRequest request) {
         log.info("사용자 채팅 스트림 처리 시작: {}", request.getUserId());
 
-        Sinks.Many<String> reportSink = Sinks.many().multicast().onBackpressureBuffer();
-        sessionReportService.registerReportSink(request.getSessionId(), reportSink);
-
-        Flux<ServerSentEvent<String>> reportEventFlux = reportSink.asFlux()
-                .map(markdown -> createReportEvent(request.getSessionId(), markdown))
-                .doOnNext(event -> log.info("리포트 SSE 이벤트 생성 - sessionId: {}", request.getSessionId()));
-
-        Flux<ServerSentEvent<String>> chatFlux = chatMessageService.savePendingMessage(request)
-                .flatMapMany(savedMessage -> processResponse(request, savedMessage, reportSink))
+        return chatMessageService.savePendingMessage(request)
+                .flatMapMany(savedMessage -> processResponse(request, savedMessage))
                 .doOnError(error -> log.error("채팅 스트림 오류: {}", error.getMessage()))
-                .doOnComplete(() -> log.info("채팅 메시지 스트림 완료: {}", request.getUserId()));
-
-        return chatFlux.mergeWith(reportEventFlux)
-                .doOnComplete(() -> log.info("SSE 스트림 전체 완료: {}", request.getUserId()));
+                .doOnComplete(() -> log.info("SSE 스트림 완료: {}", request.getUserId()));
     }
 
     private Flux<ServerSentEvent<String>> processResponse(
             ChatRequest request,
-            ChatMessage savedMessage,
-            Sinks.Many<String> reportSink) {
+            ChatMessage savedMessage) {
 
         return loadChatHistory(request)
                 .map(this::toFastApiRequest)
@@ -59,7 +48,7 @@ public class ChatService {
                         fastApiChatClient.chat(fastApiRequest)
                                 .flatMapMany(response -> {
                                     if (Boolean.TRUE.equals(response.getIsCompleted())) {
-                                        return handleCompletedSession(request, savedMessage, response, reportSink);
+                                        return handleCompletedSession(request, savedMessage, response);
                                     } else {
                                         return saveAndStreamResponse(savedMessage, response);
                                     }
@@ -107,17 +96,24 @@ public class ChatService {
     private Flux<ServerSentEvent<String>> handleCompletedSession(
             ChatRequest request,
             ChatMessage savedMessage,
-            FastApiChatResponse response,
-            Sinks.Many<String> reportSink) {
+            FastApiChatResponse response) {
 
         log.info("세션 완료 감지 - sessionId: {}", request.getSessionId());
 
+        Sinks.Many<String> reportSink = Sinks.many().unicast().onBackpressureBuffer();
+        sessionReportService.registerReportSink(request.getSessionId(), reportSink);
+
+        Flux<ServerSentEvent<String>> reportFlux = reportSink.asFlux()
+                .map(markdown -> createReportEvent(request.getSessionId(), markdown))
+                .doOnNext(event -> log.info("리포트 SSE 이벤트 생성 - sessionId: {}", request.getSessionId()));
+
+        triggerReportGeneration(request.getUserId(), request.getSessionId());
+
+        ServerSentEvent<String> chatEndEvent = createChatEndEvent(request.getSessionId());
+
         return saveAndStreamResponse(savedMessage, response)
-                .concatWith(Flux.defer(() -> {
-                    ServerSentEvent<String> chatEndEvent = createChatEndEvent(request.getSessionId());
-                    triggerReportGeneration(request.getUserId(), request.getSessionId());
-                    return Flux.just(chatEndEvent);
-                }));
+                .concatWith(Flux.just(chatEndEvent))
+                .concatWith(reportFlux);
     }
 
     private void triggerReportGeneration(String userId, String sessionId) {
