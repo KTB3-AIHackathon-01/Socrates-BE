@@ -47,7 +47,7 @@ public class ChatSessionController {
             @ApiResponse(responseCode = "404", description = "채팅 세션을 찾을 수 없음", content = @Content)
     })
     @GetMapping("/{sessionId}")
-    public ResponseEntity<ChatSessionResponse> getChatSession(@PathVariable UUID sessionId) {
+    public ResponseEntity<ChatSessionResponse> getChatSession(@PathVariable String sessionId) {
         ChatSessionResponse response = chatSessionService.getChatSession(sessionId);
         return ResponseEntity.ok(response);
     }

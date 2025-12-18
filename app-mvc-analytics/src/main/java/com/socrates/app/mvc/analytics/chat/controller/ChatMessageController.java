@@ -30,7 +30,7 @@ public class ChatMessageController {
     })
     @GetMapping("/session/{sessionId}")
     public ResponseEntity<PagedModel<ChatMessageResponse>> getMessagesBySessionId(
-            @PathVariable UUID sessionId,
+            @PathVariable String sessionId,
             @RequestHeader("X-Student-Id") UUID studentId,
             @RequestParam("page") int page,
             @RequestParam("size") int size) {
