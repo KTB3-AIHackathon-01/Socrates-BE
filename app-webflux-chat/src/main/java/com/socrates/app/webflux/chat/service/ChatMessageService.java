@@ -32,14 +32,19 @@ public class ChatMessageService {
     }
 
     public Mono<ChatMessage> updateCompletedMessage(String messageId, String assistantMessage) {
+        return updateCompletedMessage(messageId, assistantMessage, false);
+    }
+
+    public Mono<ChatMessage> updateCompletedMessage(String messageId, String assistantMessage, boolean isComplete) {
         return chatMessageRepository.findById(messageId)
                 .flatMap(message -> {
                     message.setAssistantMessage(assistantMessage);
                     message.setCompletedAt(LocalDateTime.now());
                     message.setStatus(ChatMessage.MessageStatus.COMPLETED);
+                    message.setIsComplete(isComplete);
                     return chatMessageRepository.save(message);
                 })
-                .doOnSuccess(saved -> log.debug("완료된 메시지 업데이트 완료: {}", saved.getId()));
+                .doOnSuccess(saved -> log.debug("완료된 메시지 업데이트 완료: {}, isComplete: {}", saved.getId(), saved.getIsComplete()));
     }
 
     public Mono<ChatMessage> updateFailedMessage(String messageId) {
