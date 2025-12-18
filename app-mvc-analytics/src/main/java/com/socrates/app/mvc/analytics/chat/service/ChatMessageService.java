@@ -4,7 +4,8 @@ import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
 import com.socrates.app.mvc.analytics.chat.dto.ChatMessageResponse;
 import com.socrates.app.mvc.analytics.chat.repository.ChatMessageRepository;
 import com.socrates.app.mvc.analytics.chat.repository.ChatSessionRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.socrates.app.mvc.analytics.common.exception.ChatSessionNotFoundException;
+import com.socrates.app.mvc.analytics.common.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,10 +26,10 @@ public class ChatMessageService {
 
     public PagedModel<ChatMessageResponse> getMessagesBySessionId(UUID sessionId, UUID studentId, int pageNumber, int pageSize) {
         ChatSession chatSession = chatSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Session Id: " + sessionId));
+                .orElseThrow(ChatSessionNotFoundException::new);
 
         if (!chatSession.getStudent().getId().equals(studentId)) {
-            throw new IllegalArgumentException("Student Id: " + studentId + " does not belong to Session Id: " + sessionId);
+            throw new ForbiddenException("해당 채팅 세션에 대한 접근 권한이 없습니다.");
         }
 
         Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
