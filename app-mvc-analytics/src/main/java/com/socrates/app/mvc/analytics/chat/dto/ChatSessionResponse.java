@@ -1,6 +1,6 @@
-package com.socrates.app.mvc.analytics.session.dto;
+package com.socrates.app.mvc.analytics.chat.dto;
 
-import com.socrates.app.mvc.analytics.session.domain.ChatSession;
+import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

@@ -1,9 +1,9 @@
-package com.socrates.app.mvc.analytics.session.service;
+package com.socrates.app.mvc.analytics.chat.service;
 
-import com.socrates.app.mvc.analytics.session.domain.ChatSession;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionRequest;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionResponse;
-import com.socrates.app.mvc.analytics.session.repository.ChatSessionRepository;
+import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionRequest;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionResponse;
+import com.socrates.app.mvc.analytics.chat.repository.ChatSessionRepository;
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import com.socrates.app.mvc.analytics.student.repository.StudentRepository;
 import jakarta.persistence.EntityNotFoundException;

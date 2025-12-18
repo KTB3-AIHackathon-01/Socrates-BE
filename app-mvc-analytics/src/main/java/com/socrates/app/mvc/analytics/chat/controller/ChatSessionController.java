@@ -1,8 +1,8 @@
-package com.socrates.app.mvc.analytics.session.controller;
+package com.socrates.app.mvc.analytics.chat.controller;
 
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionRequest;
-import com.socrates.app.mvc.analytics.session.dto.ChatSessionResponse;
-import com.socrates.app.mvc.analytics.session.service.ChatSessionService;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionRequest;
+import com.socrates.app.mvc.analytics.chat.dto.ChatSessionResponse;
+import com.socrates.app.mvc.analytics.chat.service.ChatSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,20 +12,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.UUID;
 
 @RequiredArgsConstructor
-@RequestMapping("/api/sessions")
+@RequestMapping("/api/chat/sessions")
 @RestController
-@Tag(name = "Sessions", description = "채팅 세션 관리 API")
+@Tag(name = "ChatSessions", description = "채팅방 세션 관리 API")
 public class ChatSessionController {
 
     private final ChatSessionService chatSessionService;

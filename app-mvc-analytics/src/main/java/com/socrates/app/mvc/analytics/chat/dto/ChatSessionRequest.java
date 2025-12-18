@@ -1,4 +1,4 @@
-package com.socrates.app.mvc.analytics.session.dto;
+package com.socrates.app.mvc.analytics.chat.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

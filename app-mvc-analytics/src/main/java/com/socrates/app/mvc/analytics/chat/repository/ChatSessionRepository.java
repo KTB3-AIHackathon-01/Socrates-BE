@@ -1,6 +1,6 @@
-package com.socrates.app.mvc.analytics.session.repository;
+package com.socrates.app.mvc.analytics.chat.repository;
 
-import com.socrates.app.mvc.analytics.session.domain.ChatSession;
+import com.socrates.app.mvc.analytics.chat.domain.ChatSession;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;

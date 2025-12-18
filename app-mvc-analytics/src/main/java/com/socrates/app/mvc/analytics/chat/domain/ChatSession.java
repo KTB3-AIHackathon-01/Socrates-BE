@@ -1,4 +1,4 @@
-package com.socrates.app.mvc.analytics.session.domain;
+package com.socrates.app.mvc.analytics.chat.domain;
 
 import com.socrates.app.mvc.analytics.student.domain.Student;
 import jakarta.persistence.*;
