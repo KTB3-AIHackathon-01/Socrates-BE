@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -22,4 +24,6 @@ public class ConceptMastery {
     private Boolean breakthrough;
 
     private String evidenceQuestion;
+
+    private LocalDateTime learningActivityTime;
 }

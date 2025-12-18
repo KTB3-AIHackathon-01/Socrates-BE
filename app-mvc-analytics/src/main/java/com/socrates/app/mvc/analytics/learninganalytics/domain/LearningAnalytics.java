@@ -34,6 +34,12 @@ public class LearningAnalytics {
 
     private InstructionalGuidance instructionalGuidance;
 
+    private Integer totalQuestions;
+
+    private Double understandingScore;
+
+    private LocalDateTime recentActivity;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
